@@ -1,6 +1,6 @@
 ADO line highlighter : Jim Gale
 
-In the Search box, type in the words you want to have rows highlighted when present.
+In the Search box, type in the words you want to have rows highlighted when present, but do not press Enter.
 Separate (or) words with commas, separate (and) words with '+'.
 
 Example: [bracket indicates inside the search box]
