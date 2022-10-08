@@ -1,16 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "ADO Highlighter",
+  "name": "ADO Highlighter for Microsoft",
   "version": "0.2.0",
-  "description": "ADO Highlighter",
+  "description": "ADO Highlighter for Microsoft ADO",
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "css": [
-        "styles.css"
-      ],
       "js": [
         "content.js"
       ],
@@ -25,5 +22,11 @@
   ],
   "action": {
     "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "ado2a16.png",
+    "32": "ado2a32.png",
+    "64": "ado2a64.png",
+    "128": "ado2a128.png"
   }
 }
