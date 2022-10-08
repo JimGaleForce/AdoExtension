@@ -3,6 +3,9 @@
   "name": "ADO Highlighter",
   "version": "0.2.0",
   "description": "ADO Highlighter",
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "css": [

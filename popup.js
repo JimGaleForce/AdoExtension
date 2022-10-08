@@ -9,6 +9,7 @@ async function saveColors(event) {
   }
 
   await chrome.storage.sync.set({ adoxData: adoxData });
+  await chrome.runtime.sendMessage('adox-colors-updated', async _ => { });
   window.close();
 }
 
@@ -35,7 +36,7 @@ async function loadColors(failed = false) {
     ];
 
     await chrome.storage.sync.set({ adoxData: adoxData });
-    await chrome.runtime.sendMessage('adox-colors-updated', _ => { });
+    await chrome.runtime.sendMessage('adox-colors-updated', async _ => { });
   }
 }
 

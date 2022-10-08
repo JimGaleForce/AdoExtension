@@ -2,7 +2,7 @@ var adoxData;
 var adoxChanged = true;
 
 function waitFirst() {
-  window.setInterval(highLine, 2000);
+  window.setInterval(highLine, 1000);
 }
 
 async function loadColors(failed = false) {
@@ -36,14 +36,17 @@ async function highLine() {
     await loadColors();
   }
 
+  await chrome.runtime.sendMessage('adox-check', async was => adoxChanged = was);
+
   if (adoxChanged) {
     adoxChanged = false;
+    await loadColors();
     var styleSheetContent = '';
     for (var i = 0; i < 5; i++) {
       styleSheetContent += `
-      .adox-line-`+ (i + 1) + ` {
-          background-color: `+ adoxData.colors[i] + `;
-      }
+.adox-line-`+ (i + 1) + ` {
+   background-color: `+ adoxData.colors[i] + `;
+}
 `;
       appendOrReplaceStyleSheet('adoxStyle', styleSheetContent);
     }
@@ -136,11 +139,3 @@ function createStyleElement(id, content) {
 
 console.log('ADO word filter active');
 waitFirst();
-chrome.runtime.onMessage.addListener(
-  async (message, sender, sendResponse) => {
-    if (message === 'adox-colors-updated') {
-      adoxChanged = true;
-    }
-    return true;
-  }
-);
