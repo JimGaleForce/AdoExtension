@@ -1,9 +1,80 @@
+var adoxData;
+var adoxChanged = true;
+
+function changeAdoxData() {
+  adoxChanged = true;
+}
+
 function waitFirst() {
   window.setInterval(highLine, 2000);
+
+  chrome.runtime.onMessage.addListener(
+    (request, sender, sendResponse) => {
+      if (request.cmd === 'resetcolors') {
+        loadColors(true);
+        sendResponse();
+      }
+
+      if (request.cmd === 'getcolors') {
+        debugger;
+        sendResponse(adoxData);
+      }
+
+      if (request.cmd === 'savecolors') {
+        adoxData.colors = request.colors;
+        localStorage.setItem('adox-data', JSON.stringify(adoxData));
+        adoxChanged = true;
+      }
+    }
+  );
+}
+
+function loadColors(failed = false) {
+  try {
+    adoxData = JSON.parse(localStorage.getItem('adox-data'));
+    debugger;
+  } catch {
+    failed = true;
+  }
+
+  if (typeof adoxData == 'undefined' || adoxData === null) {
+    adoxData = {};
+    failed = true;
+  }
+
+  if (failed) {
+    adoxData.colors = [
+      '#99FF99',
+      '#FFFF99',
+      '#99FFFF',
+      '#9999FF',
+      '#FF99FF'
+    ];
+
+    localStorage.setItem('adox-data', JSON.stringify(adoxData));
+    adoxChanged = true;
+  }
 }
 
 function highLine() {
-  var colors = ['word-highlight-1', 'word-highlight-2', 'word-highlight-3', 'word-highlight-4', 'word-highlight-5'];
+  if (typeof adoxData == 'undefined' || adoxData === null) {
+    loadColors();
+  }
+
+  if (adoxChanged) {
+    adoxChanged = false;
+    var styleSheetContent = '';
+    for (var i = 0; i < 5; i++) {
+      styleSheetContent += `
+      .adox-line-`+ (i + 1) + ` {
+          background-color: `+ adoxData.colors[i] + `;
+      }
+`;
+      appendOrReplaceStyleSheet('adoxStyle', styleSheetContent);
+    }
+  }
+
+  const colors = ['adox-line-1', 'adox-line-2', 'adox-line-3', 'adox-line-4', 'adox-line-5'];
 
   var rows = document.getElementsByClassName('grid-row');
   if (rows.length > 0) {
@@ -57,12 +128,35 @@ function highLine() {
           }
 
           row.classList.add(color);
-
         }
-
       }
     }
   }
+}
+
+// Appends CSS content to the head of the site
+function appendOrReplaceStyleSheet(id, content) {
+  var existing = document.querySelector("#" + id);
+  var head = document.head || document.getElementsByTagName("head")[0];
+  if (existing) {
+    head.removeChild(existing);
+  }
+
+  head.appendChild(createStyleElement(id, content));
+}
+
+// Creates the style element
+function createStyleElement(id, content) {
+  var style = document.createElement("style");
+  style.type = "text/css";
+  style.id = id;
+
+  if (style.styleSheet) {
+    style.styleSheet.cssText = content;
+  } else {
+    style.appendChild(document.createTextNode(content));
+  }
+  return style;
 }
 
 console.log('ADO word filter active');
