@@ -1,38 +1,14 @@
 var adoxData;
 var adoxChanged = true;
 
-function changeAdoxData() {
-  adoxChanged = true;
-}
-
 function waitFirst() {
   window.setInterval(highLine, 2000);
-
-  chrome.runtime.onMessage.addListener(
-    (request, sender, sendResponse) => {
-      if (request.cmd === 'resetcolors') {
-        loadColors(true);
-        sendResponse();
-      }
-
-      if (request.cmd === 'getcolors') {
-        debugger;
-        sendResponse(adoxData);
-      }
-
-      if (request.cmd === 'savecolors') {
-        adoxData.colors = request.colors;
-        localStorage.setItem('adox-data', JSON.stringify(adoxData));
-        adoxChanged = true;
-      }
-    }
-  );
 }
 
-function loadColors(failed = false) {
+async function loadColors(failed = false) {
   try {
-    adoxData = JSON.parse(localStorage.getItem('adox-data'));
-    debugger;
+    var data = await chrome.storage.sync.get(['adoxData']);
+    adoxData = data.adoxData;
   } catch {
     failed = true;
   }
@@ -42,7 +18,7 @@ function loadColors(failed = false) {
     failed = true;
   }
 
-  if (failed) {
+  if (failed || typeof adoxData.colors === 'undefined') {
     adoxData.colors = [
       '#99FF99',
       '#FFFF99',
@@ -51,14 +27,13 @@ function loadColors(failed = false) {
       '#FF99FF'
     ];
 
-    localStorage.setItem('adox-data', JSON.stringify(adoxData));
-    adoxChanged = true;
+    chrome.storage.sync.set({ adoxData: adoxData });
   }
 }
 
-function highLine() {
+async function highLine() {
   if (typeof adoxData == 'undefined' || adoxData === null) {
-    loadColors();
+    await loadColors();
   }
 
   if (adoxChanged) {
@@ -161,3 +136,11 @@ function createStyleElement(id, content) {
 
 console.log('ADO word filter active');
 waitFirst();
+chrome.runtime.onMessage.addListener(
+  async (message, sender, sendResponse) => {
+    if (message === 'adox-colors-updated') {
+      adoxChanged = true;
+    }
+    return true;
+  }
+);

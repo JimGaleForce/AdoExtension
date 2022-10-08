@@ -1,40 +1,60 @@
 'use script';
+var adoxData;
+async function saveColors(event) {
+  var data = await chrome.storage.sync.get(['adoxData']);
+  adoxData = data.adoxData;
 
-function saveColors(event) {
-  getColors(function (adox) {
-    var colors = [];
-    for (var i = 0; i < 5; i++) {
-      colors[i] = document.getElementById('color' + (i + 1)).value;
-    }
+  for (var i = 0; i < 5; i++) {
+    adoxData.colors[i] = document.getElementById('color' + (i + 1)).value;
+  }
 
-    chrome.runtime.sendMessage({ cmd: 'savecolors', colors: colors }, (response) => {
-      window.close();
-    });
-  })
+  await chrome.storage.sync.set({ adoxData: adoxData });
+  window.close();
 }
 
-function getColors(then) {
-  chrome.runtime.sendMessage({ cmd: 'getcolors' }, (response) => {
-    then(response);
-  });
+async function loadColors(failed = false) {
+  try {
+    var data = await chrome.storage.sync.get(['adoxData']);
+    adoxData = data.adoxData;
+  } catch {
+    failed = true;
+  }
+
+  if (typeof adoxData == 'undefined' || adoxData === null) {
+    adoxData = {};
+    failed = true;
+  }
+
+  if (failed || typeof adoxData.colors === 'undefined') {
+    adoxData.colors = [
+      '#99FF99',
+      '#FFFF99',
+      '#99FFFF',
+      '#9999FF',
+      '#FF99FF'
+    ];
+
+    await chrome.storage.sync.set({ adoxData: adoxData });
+    await chrome.runtime.sendMessage('adox-colors-updated', _ => { });
+  }
 }
 
-function resetColors() {
-  chrome.runtime.sendMessage({ cmd: 'resetcolors' }, (response) => {
-    loadColorsIntoBoxes();
-  });
+async function resetColors() {
+  await loadColors(true);
+  await loadColorsIntoBoxes();
 }
 
 function closeWindow() {
   window.close();
 }
 
-function loadColorsIntoBoxes() {
-  getColors((adox) => {
-    for (var i = 0; i < 5; i++) {
-      document.getElementById('color' + (i + 1)).value = adox.colors[i];
-    }
-  })
+async function loadColorsIntoBoxes() {
+  var data = await chrome.storage.sync.get(['adoxData']);
+  adoxData = data.adoxData;
+
+  for (var i = 0; i < 5; i++) {
+    document.getElementById('color' + (i + 1)).value = adoxData.colors[i];
+  }
 }
 
 loadColorsIntoBoxes();
