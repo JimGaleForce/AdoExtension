@@ -9,7 +9,8 @@
   "content_scripts": [
     {
       "js": [
-        "content.js"
+        "content.js",
+        "proposed.js"
       ],
       "matches": [
         "https://microsoft.visualstudio.com/*"

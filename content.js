@@ -18,6 +18,10 @@ async function loadColors(failed = false) {
     failed = true;
   }
 
+  if (typeof adoxData.queryId === 'undefined') {
+    adoxData.queryId = '';
+  }
+
   if (failed || typeof adoxData.colors === 'undefined') {
     adoxData.colors = [
       '#99FF99',
