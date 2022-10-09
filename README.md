@@ -20,6 +20,7 @@ For Highlighting:
 * To search different items, separate by comma: "This,That" shows in different colors
 * To search a combination of (and'd) items, separate by a plus (+): "This+that,other+that"
 * To change colors, click the extension's icon, change colors and Save
+![Popup](https://raw.githubusercontent.com/JimGaleForce/AdoExtension/main/popup.png "Popup")
 
 For Proposed Work details:
 * For a current backlog/sprint, use the [...] menu to Create a Query
