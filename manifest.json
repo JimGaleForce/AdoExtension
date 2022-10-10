@@ -13,7 +13,8 @@
         "proposed.js"
       ],
       "matches": [
-        "https://microsoft.visualstudio.com/*"
+        "https://microsoft.visualstudio.com/*",
+        "https://dev.azure.com/*"
       ],
       "run_at": "document_idle"
     }
