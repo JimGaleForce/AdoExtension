@@ -49,7 +49,7 @@ async function highLine() {
     for (var i = 0; i < 5; i++) {
       styleSheetContent += `
 .adox-line-`+ (i + 1) + ` {
-   background-color: `+ adoxData.colors[i] + `;
+   background-color: `+ adoxData.colors[i] + ` !important;
 }
 `;
       appendOrReplaceStyleSheet('adoxStyle', styleSheetContent);
@@ -58,7 +58,14 @@ async function highLine() {
 
   const colors = ['adox-line-1', 'adox-line-2', 'adox-line-3', 'adox-line-4', 'adox-line-5'];
 
+  let cellClass = 'grid-cell';
   var rows = document.getElementsByClassName('grid-row');
+  if (rows.length === 0) {
+    rows = document.getElementsByClassName('tbTileContent');
+    if (rows.length > 0) {
+      cellClass = 'field-container';
+    }
+  }
   if (rows.length > 0) {
     for (r = 0; r < rows.length; r++) {
       var g = rows[r];
@@ -79,7 +86,7 @@ async function highLine() {
   for (r = 0; r < rows.length; r++) {
     var row = rows[r];
 
-    var spans = row.getElementsByClassName('grid-cell');
+    var spans = row.getElementsByClassName(cellClass);
     var words = wordset.split(',');
     for (var w = 0; w < words.length; w++) {
       var word = words[w].trim();
