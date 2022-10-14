@@ -24,11 +24,11 @@ async function loadColors(failed = false) {
 
   if (failed || typeof adoxData.colors === 'undefined') {
     adoxData.colors = [
-      '#99FF99',
-      '#FFFF99',
-      '#99FFFF',
-      '#9999FF',
-      '#FF99FF'
+      '#ccFFcc',
+      '#FFFFcc',
+      '#FFcccc',
+      '#ccccFF',
+      '#ccFFFF'
     ];
 
     chrome.storage.sync.set({ adoxData: adoxData });
