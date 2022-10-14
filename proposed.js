@@ -14,6 +14,11 @@
 
 var _tfs_counts = [];
 var queryId = null;
+var ic_currentLength = 0;
+var ic_time = 4000; //first time
+var ic_timeCheck = ic_time;
+var biglist = null;
+var urlBase;
 
 function zeroCounts() {
   _tfs_counts = [];
@@ -32,10 +37,6 @@ function getCountOf(name) {
 
   return { name: name, yellow: 0.0, amount: 0.0 };
 }
-
-var ic_currentLength = 0;
-var ic_time = 4000; //first time
-var ic_timeCheck = ic_time;
 
 function ic_checkForChanges() {
   if (typeof queryId === 'undefined' || queryId == null || queryId.length == 0) {
@@ -94,9 +95,6 @@ function ic_checkForChanges() {
   }
 }
 
-setTimeout(ic_checkForChanges, 2000);
-loadInitialData();
-
 async function loadInitialData() {
   try {
     var data = await chrome.storage.sync.get(['adoxData']);
@@ -123,8 +121,6 @@ function httpGetAsync(callback, theUrl) {
   xmlHttp.send(null);
 }
 
-var urlBase;
-
 function getData() {
   urlBase = document.URL.substring(0, document.URL.indexOf('_'));
   var urlFull = urlBase + "/_apis/wit/queries/" + queryId;
@@ -139,19 +135,21 @@ function getQueryId() {
 function getDataIds(data) {
   var json = JSON.parse(data);
   var ids = "";
-  for (var i = 0; i < json.workItemRelations.length; i++) {
-    var item = json.workItemRelations[i];
-    if (item.target != null) {
-      ids += item.target.id + ",";
+
+  var list = json.workItemRelations ? json.workItemRelations : json.workItems;
+
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i];
+    var target = item.target ? item.target : item;
+    if (target != null) {
+      ids += target.id + ",";
     }
   }
 
   ids = ids.substr(0, ids.length - 1);
 
-  httpGetAsync(getDataCreateTable, urlBase + "/_apis/wit/workitems?ids=" + ids + "&fields=System.State,System.AssignedTo,OSG.RemainingDays&api-version=6.0");
+  httpGetAsync(getDataCreateTable, urlBase + "/_apis/wit/workitems?ids=" + ids + "&fields=System.State,System.AssignedTo,OSG.RemainingDays,System.IterationLevel3&api-version=6.0");
 }
-
-var biglist = null;
 
 function getDataCreateTable(list) {
   var listobj = JSON.parse(list);
@@ -159,8 +157,14 @@ function getDataCreateTable(list) {
 
   //create table
   var table = [];
+  var url = decodeURI(document.URL);
   for (var i = 0; i < listobj.value.length; i++) {
     var item = listobj.value[i];
+
+    var iteration = item.fields["System.IterationLevel3"];
+    if (url.indexOf(iteration) == -1) {
+      continue;
+    }
 
     var name = item.fields["System.AssignedTo"];
 
@@ -211,3 +215,6 @@ function getDataCreateTable(list) {
     tableitem.amount = table[ii].amount;
   }
 }
+
+setTimeout(ic_checkForChanges, 2000);
+loadInitialData();

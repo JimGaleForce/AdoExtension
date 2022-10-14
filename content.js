@@ -36,12 +36,20 @@ async function loadColors(failed = false) {
 }
 
 async function highLine() {
+  // if this page has no search box, exit
+  if (document.getElementsByClassName('search-input').length === 0) {
+    return;
+  }
+
+  // if localstorage is undefined, load
   if (typeof adoxData == 'undefined' || adoxData === null) {
     await loadColors();
   }
 
+  // get 'something has changed' event
   await chrome.runtime.sendMessage('adox-check', async was => adoxChanged = was);
 
+  // if changed, change stylesheet to match new colors
   if (adoxChanged) {
     adoxChanged = false;
     await loadColors();
@@ -58,6 +66,7 @@ async function highLine() {
 
   const colors = ['adox-line-1', 'adox-line-2', 'adox-line-3', 'adox-line-4', 'adox-line-5'];
 
+  // get rows from backlog, or tiles from taskboard
   let cellClass = 'grid-cell';
   var rows = document.getElementsByClassName('grid-row');
   if (rows.length === 0) {
@@ -66,23 +75,31 @@ async function highLine() {
       cellClass = 'field-container';
     }
   }
-  if (rows.length > 0) {
-    for (r = 0; r < rows.length; r++) {
-      var g = rows[r];
-      for (var c = 0; c < colors.length; c++) {
-        var color = colors[c];
-        if (g.classList.contains(color)) {
-          g.classList.remove(color);
-        }
+
+  // if no rows, nothing to do
+  if (rows.length === 0) {
+    return;
+  }
+
+  for (r = 0; r < rows.length; r++) {
+    var g = rows[r];
+    for (var c = 0; c < colors.length; c++) {
+      var color = colors[c];
+      if (g.classList.contains(color)) {
+        g.classList.remove(color);
       }
     }
   }
 
+  // get the search text from the search box
   var wordset = document.getElementsByClassName('search-input')[0].value;
+
+  // if nothing to search, nothing to do
   if (wordset.length === 0) {
     return;
   }
 
+  // go through all rows or tiles and test against the search text (and/ors/groups)
   for (r = 0; r < rows.length; r++) {
     var row = rows[r];
 
@@ -92,29 +109,40 @@ async function highLine() {
       var word = words[w].trim();
       if (word.length > 0) {
         var color = colors[Math.min(4, w)];
-        var andwords = word.split('+');
-        var validSpans = [];
-        for (var w2 = 0; w2 < andwords.length; w2++) {
-          var subword = andwords[w2].trim();
-          var valid = false;
-          for (var s = 0; s < spans.length; s++) {
-            if (spans[s].textContent.indexOf(subword) > -1) {
-              validSpans.push(spans[s]);
-              valid = true;
+
+        var orwords = word.split('|');
+        for (var w3 = 0; w3 < orwords.length; w3++) {
+          var orword = orwords[w3];
+
+          var andwords = orword.split('+');
+          var validSpans = [];
+          for (var w2 = 0; w2 < andwords.length; w2++) {
+            var subword = andwords[w2].trim();
+            var valid = false;
+            for (var s = 0; s < spans.length; s++) {
+              if (spans[s].textContent.indexOf(subword) > -1) {
+                validSpans.push(spans[s]);
+                valid = true;
+              }
+            }
+
+            if (!valid) {
+              validSpans = [];
+              break;
             }
           }
 
-          if (!valid) {
-            validSpans = [];
+          if (valid) {
             break;
           }
         }
 
+        // if matches search, add the color to the row's classlist (i.e. color the row)
         if (validSpans.length > 0) {
-          for (var v = 0; v < validSpans.length; v++) {
-            // validSpans[v].classList.add(color)
-
-          }
+          // todo: colorize the item itself
+          // for (var v = 0; v < validSpans.length; v++) {
+          //   // validSpans[v].classList.add(color)
+          // }
 
           row.classList.add(color);
         }
