@@ -92,7 +92,7 @@ async function highLine() {
   }
 
   // get the search text from the search box
-  var wordset = document.getElementsByClassName('search-input')[0].value;
+  var wordset = document.getElementsByClassName('search-input')[0].value.toLowerCase();
 
   // if nothing to search, nothing to do
   if (wordset.length === 0) {
@@ -120,7 +120,7 @@ async function highLine() {
             var subword = andwords[w2].trim();
             var valid = false;
             for (var s = 0; s < spans.length; s++) {
-              if (spans[s].textContent.indexOf(subword) > -1) {
+              if (spans[s].textContent.toLowerCase().indexOf(subword) > -1) {
                 validSpans.push(spans[s]);
                 valid = true;
               }
