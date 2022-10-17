@@ -23,13 +23,25 @@ async function loadColors(failed = false) {
   }
 
   if (failed || typeof adoxData.colors === 'undefined') {
-    adoxData.colors = [
-      '#ccFFcc',
-      '#FFFFcc',
-      '#FFcccc',
-      '#ccccFF',
-      '#ccFFFF'
-    ];
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      // dark mode
+      adoxData.colors = [
+        '#003300',
+        '#333300',
+        '#330000',
+        '#000033',
+        '#003333'
+      ];
+
+    } else {
+      adoxData.colors = [
+        '#ccFFcc',
+        '#FFFFcc',
+        '#FFcccc',
+        '#ccccFF',
+        '#ccFFFF'
+      ];
+    }
 
     chrome.storage.sync.set({ adoxData: adoxData });
   }
