@@ -52,75 +52,88 @@ function ic_checkForChanges() {
     for (var i = 0; i < table.length; i++) {
       var item = table[i];
       var nameitem = item.querySelector(".identity-picker-resolved-name");
-      if (nameitem) {
-        var name = nameitem.innerText;
-        if (name) {
-          var current = item.querySelector(".visual-progress-total");
-          if (current) {
-            for (var j = 0; j < _tfs_counts.length; j++) {
-              var tfsitem = _tfs_counts[j];
-              if (tfsitem.name.indexOf(name) === 0) {
+      updateBars(nameitem, item)
+    }
+  }
 
-                var existingProposed = item.querySelector(".visual-progress-proposed");
-                if (existingProposed) {
-                  existingProposed.parentNode.removeChild(existingProposed);
-                }
+  table = document.querySelectorAll(".display-text");
+  if (table.length > 0) {
+    for (var i = 0; i < table.length; i++) {
+      var item = table[i].parentNode;
+      var nameitem = table[i];
+      updateBars(nameitem, item)
+    }
+  }
+}
 
-                var existingBugs = item.querySelector(".visual-progress-bugs");
-                if (existingBugs) {
-                  existingBugs.parentNode.removeChild(existingBugs);
-                }
+function updateBars(nameitem, item) {
+  if (nameitem) {
+    var name = nameitem.innerText;
+    if (name) {
+      var current = item.querySelector(".visual-progress-total");
+      if (current) {
+        for (var j = 0; j < _tfs_counts.length; j++) {
+          var tfsitem = _tfs_counts[j];
+          if (tfsitem.name.indexOf(name) === 0) {
+            var existingProposed = item.querySelector(".visual-progress-proposed");
+            if (existingProposed) {
+              existingProposed.parentNode.removeChild(existingProposed);
+            }
 
-                existingProposed = document.createElement("div");
-                existingProposed.setAttribute('class', 'visual-progress-proposed');
+            var existingBugs = item.querySelector(".visual-progress-bugs");
+            if (existingBugs) {
+              existingBugs.parentNode.removeChild(existingBugs);
+            }
 
-                existingBugs = document.createElement("div");
-                existingBugs.setAttribute('class', 'visual-progress-bugs');
+            existingProposed = document.createElement("div");
+            existingProposed.setAttribute('class', 'visual-progress-proposed');
 
-                var proposedPercent = (tfsitem.proposed / (tfsitem.amount + tfsitem.proposed + tfsitem.bug)) * 100;
-                if (isNaN(proposedPercent)) {
-                  console.debug(name + ' yellow=' + tfsitem.proposed + ", amount=" + tfsitem.amount);
-                }
-                existingProposed.setAttribute('style', 'width: ' + proposedPercent + "%; background-color: yellow; float: right; height: 18px; opacity: 0.75");
+            existingBugs = document.createElement("div");
+            existingBugs.setAttribute('class', 'visual-progress-bugs');
 
-                var bugPercent = (tfsitem.bug / (tfsitem.amount + tfsitem.proposed + tfsitem.bug)) * 100;
-                if (isNaN(bugPercent)) {
-                  console.debug(name + ' bug=' + tfsitem.bugPercent + ", amount=" + tfsitem.amount);
-                }
-                existingBugs.setAttribute('style', 'width: ' + bugPercent + "%; background-color: purple; float: left; height: 18px; opacity: 0.75");
+            var proposedPercent = (tfsitem.proposed / (tfsitem.amount + tfsitem.proposed + tfsitem.bug)) * 100;
+            if (isNaN(proposedPercent)) {
+              console.debug(name + ' yellow=' + tfsitem.proposed + ", amount=" + tfsitem.amount);
+            }
+            existingProposed.setAttribute('style', 'width: ' + proposedPercent + "%; background-color: yellow; float: right; height: 18px; opacity: 0.75");
 
-                var existingUnder = item.querySelector(".visual-progress-underallocated");
-                if (existingUnder) {
-                  existingUnder.appendChild(existingProposed);
-                  existingUnder.appendChild(existingBugs);
-                } else {
-                  var existingOver = item.querySelector(".visual-progress-total.visual-progress-overallocated");
-                  if (existingOver) {
-                    existingOver.parentNode.insertBefore(existingProposed, existingOver);
-                    existingOver.parentNode.insertBefore(existingBugs, existingOver);
-                  }
-                }
+            var bugPercent = (tfsitem.bug / (tfsitem.amount + tfsitem.proposed + tfsitem.bug)) * 100;
+            if (isNaN(bugPercent)) {
+              console.debug(name + ' bug=' + tfsitem.bugPercent + ", amount=" + tfsitem.amount);
+            }
+            existingBugs.setAttribute('style', 'width: ' + bugPercent + "%; background-color: purple; float: left; height: 18px; opacity: 0.75");
 
-                var existingMissing = item.querySelector(".progress-text-missing");
-                if (existingMissing) {
-                  existingMissing.parentNode.removeChild(existingMissing);
-                }
-
-                if (tfsitem.missing > 0) {
-                  existingMissing = document.createElement("div");
-                  existingMissing.setAttribute('class', 'progress-text-missing');
-                  existingMissing.textContent = '(' + tfsitem.missing + ' unestimated item' + (tfsitem.missing == 1 ? '' : 's') + ')';
-                  existingMissing.setAttribute('style', 'display: inline;');
-
-                  var container = item.querySelector(".visual-progress-container");
-                  if (container) {
-                    container.parentNode.appendChild(existingMissing);
-                  }
-                }
-
-                break;
+            var existingUnder = item.querySelector(".visual-progress-underallocated");
+            if (existingUnder) {
+              existingUnder.appendChild(existingProposed);
+              existingUnder.appendChild(existingBugs);
+            } else {
+              var existingOver = item.querySelector(".visual-progress-total.visual-progress-overallocated");
+              if (existingOver) {
+                existingOver.parentNode.insertBefore(existingProposed, existingOver);
+                existingOver.parentNode.insertBefore(existingBugs, existingOver);
               }
             }
+
+            var existingMissing = item.querySelector(".progress-text-missing");
+            if (existingMissing) {
+              existingMissing.parentNode.removeChild(existingMissing);
+            }
+
+            if (tfsitem.missing > 0) {
+              existingMissing = document.createElement("div");
+              existingMissing.setAttribute('class', 'progress-text-missing');
+              existingMissing.textContent = '(' + tfsitem.missing + ' unestimated item' + (tfsitem.missing == 1 ? '' : 's') + ')';
+              existingMissing.setAttribute('style', 'display: inline;');
+
+              var container = item.querySelector(".visual-progress-container");
+              if (container) {
+                container.parentNode.appendChild(existingMissing);
+              }
+            }
+
+
+            break;
           }
         }
       }
@@ -181,7 +194,7 @@ function getDataIds(data) {
 
   ids = ids.substr(0, ids.length - 1);
 
-  httpGetAsync(getDataCreateTable, urlBase + "/_apis/wit/workitems?ids=" + ids + "&fields=System.State,System.AssignedTo,OSG.RemainingDays,System.IterationLevel3,System.WorkItemType&api-version=6.0");
+  httpGetAsync(getDataCreateTable, urlBase + "/_apis/wit/workitems?ids=" + ids + "&fields=System.State,System.AssignedTo,OSG.RemainingDays,System.IterationLevel3,System.WorkItemType,Microsoft.VSTS.CMMI.TaskType&api-version=6.0");
 }
 
 function createNewTableItem(name) {
@@ -207,6 +220,7 @@ function getDataCreateTable(list) {
 
     const state = item.fields["System.State"];
     const workitemType = item.fields["System.WorkItemType"];
+    const taskType = item.fields["Microsoft.VSTS.CMMI.TaskType"];
     const proposed = state === "Proposed";
     const bug = workitemType === "Bug";
     const isAmountExpected = state === "Proposed" || state === "Active" || state == "Committed" || state == "Started";
@@ -216,30 +230,9 @@ function getDataCreateTable(list) {
       amount = 0.0;
     }
 
-    var tableitem = null;
-    for (var j = 0; j < table.length; j++) {
-      if (table[j].name === name.displayName) {
-        tableitem = table[j];
-        break;
-      }
-    }
-
-    if (tableitem === null) {
-      tableitem = createNewTableItem(name.displayName);
-      table.push(tableitem);
-    }
-
-    if (proposed) {
-      table[j].proposed += amount;
-    } else if (bug) {
-      table[j].bug += amount;
-    } else if (other) {
-      table[j].amount += amount;
-    }
-
-    if (isAmountExpected && amount == 0) {
-      table[j].missing++;
-    }
+    addToTable(table, name.displayName, proposed, bug, other, isAmountExpected, amount);
+    addToTable(table, taskType, proposed, bug, other, isAmountExpected, amount);
+    addToTable(table, 'Team', proposed, bug, other, isAmountExpected, amount);
   }
 
   //add to _tfs_counts
@@ -261,6 +254,33 @@ function getDataCreateTable(list) {
     tableitem.bug = table[ii].bug;
     tableitem.amount = table[ii].amount;
     tableitem.missing = table[ii].missing;
+  }
+}
+
+function addToTable(table, name, proposed, bug, other, isAmountExpected, amount) {
+  var tableitem = null;
+  for (var j = 0; j < table.length; j++) {
+    if (table[j].name === name) {
+      tableitem = table[j];
+      break;
+    }
+  }
+
+  if (tableitem === null) {
+    tableitem = createNewTableItem(name);
+    table.push(tableitem);
+  }
+
+  if (proposed) {
+    table[j].proposed += amount;
+  } else if (bug) {
+    table[j].bug += amount;
+  } else if (other) {
+    table[j].amount += amount;
+  }
+
+  if (isAmountExpected && amount == 0) {
+    table[j].missing++;
   }
 }
 
