@@ -157,11 +157,11 @@ function httpGet(theUrl) {
   return xmlHttp.responseText;
 }
 
-function httpGetAsync(callback, theUrl) {
+async function httpGetAsync(callback, theUrl) {
   var xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = function () {
+  xmlHttp.onreadystatechange = async function () {
     if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
-      callback(xmlHttp.responseText);
+      await callback(xmlHttp.responseText);
   }
   xmlHttp.open("GET", theUrl, true);
   xmlHttp.send(null);

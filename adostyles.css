@@ -1,0 +1,10 @@
+.date-overdue {
+  color: red;
+}
+
+.date-under {}
+
+.days-zero {
+  color: red;
+  font-size: large;
+}

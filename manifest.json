@@ -8,9 +8,13 @@
   },
   "content_scripts": [
     {
+      "css": [
+        "adostyles.css"
+      ],
       "js": [
         "content.js",
-        "proposed.js"
+        "proposed.js",
+        "timeline.js"
       ],
       "matches": [
         "https://microsoft.visualstudio.com/*",
