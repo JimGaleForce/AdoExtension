@@ -231,7 +231,9 @@ function getDataCreateTable(list) {
     }
 
     addToTable(table, name.displayName, proposed, bug, other, isAmountExpected, amount);
-    addToTable(table, taskType, proposed, bug, other, isAmountExpected, amount);
+    if (typeof taskType != 'undefined') {
+      addToTable(table, taskType, proposed, bug, other, isAmountExpected, amount);
+    }
     addToTable(table, 'Team', proposed, bug, other, isAmountExpected, amount);
   }
 
@@ -267,6 +269,7 @@ function addToTable(table, name, proposed, bug, other, isAmountExpected, amount)
   }
 
   if (tableitem === null) {
+    debugger;
     tableitem = createNewTableItem(name);
     table.push(tableitem);
   }

@@ -113,6 +113,65 @@ function checkOverall3() {
   window.clearInterval(tick3);
 
   schedule();
+  addTabPage();
+}
+
+function addTabPage() {
+  var pivotBar = document.getElementsByClassName('vss-HubHeader')[0];
+  var tab = document.createElement('span');
+  tab.innerHTML = '<button id="newpage-btn">hey</button>';
+  pivotBar.appendChild(tab);
+  window.setTimeout(() => {
+    document.getElementById('newpage-btn').addEventListener('click', newpage);
+  }, 250);
+}
+
+function newpage(event) {
+  var content = document.getElementsByClassName('vss-PivotBar--content')[0];
+  content.setAttribute('class', 'vss-PivotBar--content x-hide');
+  loadFile(chrome.runtime.getURL('timeline.html'), afterLoadNew);
+}
+
+function loadFile(filename, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', filename, true);
+  xhr.onreadystatechange = function () {
+    if (this.readyState !== 4) return;
+    if (this.status !== 200) return; // or whatever error handling you want
+    var parent = document.getElementsByClassName('vss-PivotBar')[0];
+    var tab = document.createElement('span');
+    tab.innerHTML = this.responseText;
+    parent.appendChild(tab);
+    callback();
+  };
+  xhr.send();
+}
+
+function getPerson(name) {
+  var keys = Object.keys(people);
+  for (var i = 0; i < keys.length; i++) {
+    if (people[keys[i]].displayName === name) {
+      return people[keys[i]].id;
+    }
+  }
+
+  return null;
+}
+
+function afterLoadNew() {
+  var grid = document.getElementById('tl-body');
+
+  var id = getPerson('Jim Gale');
+
+  //var id = people.filter(p => p.displayName === 'Jim Gale')[0].id;
+  var sb = '';
+  var xitems = items.filter(i => i.links.length === 0 && i.assignedTo.id === id).sort((a, b) => a._startDate - b._startDate).map(
+    item => {
+      sb += '<tr><td>' + item._startDate.toDateString() + '</td><td>' + item._endDate.toDateString() + '</td><td>' + item._remainingDays + '</td><td>' + item.title + '</td></tr>';
+    }
+  )
+
+  grid.innerHTML = sb;
 }
 
 function nextWorkDate(date, days) {
@@ -138,6 +197,7 @@ function nextWorkDate(date, days) {
 
 //   return item.order;
 // }
+var people = [];
 
 function schedule() {
   // assign due dates per iteration's end times for each item (MIN of parent's due dates or self)
@@ -151,10 +211,8 @@ function schedule() {
 
   // sort all items by due date
 
-  var people = [];
   var minDate = nextWorkDate(new Date(), 0);
   var xitems = items.filter(i => i.links.length === 0).sort((a, b) => a.order - b.order); //.sort((a, b) => a._dueDate - b._dueDate);
-  debugger;
   xitems.map(item => {
     // from the top, start adding up time, per person, per capacity
     var assignedTo = item.assignedTo;

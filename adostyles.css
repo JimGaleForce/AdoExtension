@@ -8,3 +8,11 @@
   color: red;
   font-size: large;
 }
+
+.x-hide {
+  display: none !important;
+}
+
+.tl-table {
+  overflow-y: auto;
+}
