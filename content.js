@@ -26,6 +26,10 @@ async function loadColors(failed = false) {
     adoxData.epicQueryId = '';
   }
 
+  if (typeof adoxData.epicSort === 'undefined') {
+    adoxData.epicSort = 'listedorder';
+  }
+
   if (failed || typeof adoxData.colors === 'undefined') {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       // dark mode

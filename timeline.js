@@ -1,5 +1,6 @@
 var items = [];
 var epicQueryId = null;
+var epicSort = 'listedorder';
 var urlBase2;
 
 async function loadData() {
@@ -17,7 +18,7 @@ function newtitem(id) {
     id: id, links: [], backlinks: [], remainingDays: 0,
     proposed: 0, bug: 0, other: 0, _remainingDays: 0,
     _proposed: 0, _bug: 0, _other: 0, amount: 0, _amount: 0,
-    missing: 0, type: null, state: null, order: 0, scenarioOrder: 0
+    missing: 0, type: null, state: null, order: 0, orderId: 0
   };
 }
 
@@ -29,6 +30,7 @@ async function loadKRquery(data) {
 
   var len = list.length; // Math.min(10, list.length);
   var count = 0;
+  var flipCount = 0;
   for (var i = 0; i < len; i++) {
     var listitem = list[i];
 
@@ -39,6 +41,7 @@ async function loadKRquery(data) {
         item.order = count;
         ids += (ids.length > 0 ? "," : "") + listitem.source.id;
         count++;
+        flipCount++;
         items[listitem.source.id] = item;
       }
 
@@ -54,6 +57,7 @@ async function loadKRquery(data) {
         item.order = count;
         ids += (ids.length > 0 ? "," : "") + listitem.target.id;
         count++;
+        flipCount++;
         items[listitem.target.id] = item;
       }
 
@@ -63,7 +67,7 @@ async function loadKRquery(data) {
     }
 
     // todo: get id info per 100 items
-    if (count >= 100 || (count > 0 && i == len - 1)) {
+    if (flipCount >= 100 || (flipCount > 0 && i == len - 1)) {
       overall++;
       await httpGetAsync2(getKRDataCreateTable, urlBase2 + "_apis/wit/workitems?ids=" + ids +
         "&fields=System.Id,System.State,System.AssignedTo,OSG.RemainingDays,System.IterationLevel3," +
@@ -72,7 +76,7 @@ async function loadKRquery(data) {
         "Microsoft.VSTS.Scheduling.DueDate,Microsoft.VSTS.Scheduling.OriginalEstimate," +
         "OSG.RemainingDevDays,Microsoft.VSTS.Common.StackRank,Microsoft.VSTS.Common.BacklogPriority&api-version=6.0");
       ids = "";
-      count = 0;
+      flipCount = 0;
     }
 
   }
@@ -208,16 +212,24 @@ function nextWorkDate(date, days) {
 // }
 var people = [];
 
-function getScenarioTitle(a, prevTitle) {
+function getScenarioTitleFromEpic(a, prevTitle) {
   if (a.backlinks.length === 0) {
     return prevTitle;
   }
   return getScenarioTitle(items[a.backlinks[0]], a.title);
 }
 
+function getScenarioTitle(a) {
+  if (a.backlinks.length === 0) {
+    return a.title;
+  }
+  return getScenarioTitle(items[a.backlinks[0]]);
+}
+
 function scenarioOrder(a, b) {
-  var aTitle = getScenarioTitle(a, a.title);
-  var bTitle = getScenarioTitle(b, b.title);
+  debugger;
+  var aTitle = getScenarioTitle(a) ?? '';
+  var bTitle = getScenarioTitle(b) ?? '';
   var result = aTitle.localeCompare(bTitle);
 
   // console.log(result + '=' + aTitle + ',' + bTitle);
@@ -237,7 +249,22 @@ function schedule() {
 
   // sort all items by due date
   var minDate = nextWorkDate(new Date(), 0);
-  var xitems = items.filter(i => i.links.length === 0).sort((a, b) => scenarioOrder(a, b)); //.sort((a, b) => a._dueDate - b._dueDate);
+  var xitems = items.filter(i => i.links.length === 0);
+  switch (epicSort) {
+    case 'duedate':
+      xitems = xitems.sort((a, b) => a._dueDate - b._dueDate);
+      break;
+    case 'scenario':
+      xitems = xitems.sort((a, b) => scenarioOrder(a, b));
+      break;
+    case 'listedorder':
+      xitems = xitems.sort((a, b) => a.order - b.order);
+      break;
+    case 'listedorder':
+      xitems = xitems.sort((a, b) => a.orderId - b.orderId);
+      break;
+  }
+
   xitems.map(item => {
     // from the top, start adding up time, per person, per capacity
     var assignedTo = item.assignedTo;
@@ -331,9 +358,9 @@ function populate() {
     createChildItem(cols[acceptedDateIndex], item._endDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._endDate.toDateString(), item._dueDate < item._endDate ? 'date-overdue' : 'date-under', item.links.length === 0);
     createChildItem(cols[remainingDaysIndex], item._remainingDays, item._remainingDays == 0 && !isFuture ? 'days-zero' : 'days-nonzero', item.links.length === 0);
 
-    // if (orderIndex > -1) {
-    //   cols[orderIndex].textContent = item.order;
-    // }
+    if (orderIndex > -1) {
+      cols[orderIndex].textContent = item.order;
+    }
   }
 
   var titleElem = acceptedDateColumn.getElementsByClassName('title')[0];
@@ -489,7 +516,7 @@ function getKRDataCreateTable(list) {
     tItem.assignedTo = name;
     tItem.type = taskType;
     tItem.state = state;
-    //tItem.order = item.fields["Microsoft.VSTS.Common.BacklogPriority"];
+    tItem.orderId = item.fields["OSG.Order"];
     tItem.title = item.fields["System.Title"];
 
     if (isAmountExpected && amount == 0) {
@@ -529,6 +556,7 @@ async function loadInitialTimelineData() {
     urlBase2 = document.URL.substring(0, document.URL.indexOf('_'));
     var data = await chrome.storage.sync.get(['adoxData']);
     epicQueryId = data.adoxData.epicQueryId;
+    epicSort = data.adoxData.epicSort ?? 'duedate';
     loadData();
   } catch {
     failed = true;
