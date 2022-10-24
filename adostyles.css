@@ -16,3 +16,19 @@
 .tl-table {
   overflow-y: auto;
 }
+
+.workitem {
+  font-weight: 400;
+}
+
+.owner {
+  font-weight: 100;
+}
+
+.trow {
+  margin: 2px;
+}
+
+.tcell {
+  padding: 4px;
+}

@@ -12,7 +12,7 @@ function newtitem(id) {
     id: id, links: [], backlinks: [], remainingDays: 0,
     proposed: 0, bug: 0, other: 0, _remainingDays: 0,
     _proposed: 0, _bug: 0, _other: 0, amount: 0, _amount: 0,
-    missing: 0, type: null, state: null, order: 0
+    missing: 0, type: null, state: null, order: 0, scenarioOrder: 0
   };
 }
 
@@ -119,7 +119,7 @@ function checkOverall3() {
 function addTabPage() {
   var pivotBar = document.getElementsByClassName('vss-HubHeader')[0];
   var tab = document.createElement('span');
-  tab.innerHTML = '<button id="newpage-btn">hey</button>';
+  tab.innerHTML = '<button id="newpage-btn">list</button>';
   pivotBar.appendChild(tab);
   window.setTimeout(() => {
     document.getElementById('newpage-btn').addEventListener('click', newpage);
@@ -167,7 +167,7 @@ function afterLoadNew() {
   var sb = '';
   var xitems = items.filter(i => i.links.length === 0 && i.assignedTo.id === id).sort((a, b) => a._startDate - b._startDate).map(
     item => {
-      sb += '<tr><td>' + item._startDate.toDateString() + '</td><td>' + item._endDate.toDateString() + '</td><td>' + item._remainingDays + '</td><td>' + item.title + '</td></tr>';
+      sb += '<tr class="trow"><td class="tcell">' + item._startDate.toDateString() + '</td><td class="tcell">' + item._endDate.toDateString() + '</td><td class="tcell">' + item._remainingDays + '</td><td class="tcell">' + item.title + '</td></tr>';
     }
   )
 
@@ -199,6 +199,23 @@ function nextWorkDate(date, days) {
 // }
 var people = [];
 
+function getScenarioTitle(a, prevTitle) {
+  if (a.backlinks.length === 0) {
+    return prevTitle;
+  }
+  return getScenarioTitle(items[a.backlinks[0]], a.title);
+}
+
+function scenarioOrder(a, b) {
+  var aTitle = getScenarioTitle(a, a.title);
+  var bTitle = getScenarioTitle(b, b.title);
+  var result = aTitle.localeCompare(bTitle);
+
+  // console.log(result + '=' + aTitle + ',' + bTitle);
+
+  return result;
+}
+
 function schedule() {
   // assign due dates per iteration's end times for each item (MIN of parent's due dates or self)
   var workItems = items.filter(i => i.links.length === 0);
@@ -210,9 +227,8 @@ function schedule() {
   });
 
   // sort all items by due date
-
   var minDate = nextWorkDate(new Date(), 0);
-  var xitems = items.filter(i => i.links.length === 0).sort((a, b) => a.order - b.order); //.sort((a, b) => a._dueDate - b._dueDate);
+  var xitems = items.filter(i => i.links.length === 0).sort((a, b) => scenarioOrder(a, b)); //.sort((a, b) => a._dueDate - b._dueDate);
   xitems.map(item => {
     // from the top, start adding up time, per person, per capacity
     var assignedTo = item.assignedTo;
@@ -243,6 +259,7 @@ var startDateIndex = -1;
 var dueDateIndex = -1;
 var acceptedDateIndex = -1;
 var remainingDaysIndex = -1;
+var orderIndex = -1;
 var isPopulated = false;
 var isGoodView = true;
 var popTick = 0;
@@ -271,6 +288,7 @@ function populate() {
     dueDateIndex = header.indexOf('Due Date');
     acceptedDateIndex = header.indexOf(aDateName);
     remainingDaysIndex = header.indexOf('Remaining Days');
+    orderIndex = header.indexOf('Order');
   }
 
   acceptedDateColumn = headerElem[acceptedDateIndex];
@@ -299,19 +317,27 @@ function populate() {
     }
 
     var isFuture = item._dueDate.getYear() + 1900 > 2047;
-    createChildItem(cols[startDateIndex], item._startDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._startDate.toDateString(), item._dueDate < item._startDate ? 'date-overdue' : 'date-under');
-    cols[dueDateIndex].textContent = item._dueDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._dueDate.toDateString();
-    createChildItem(cols[acceptedDateIndex], item._endDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._endDate.toDateString(), item._dueDate < item._endDate ? 'date-overdue' : 'date-under');
-    createChildItem(cols[remainingDaysIndex], item._remainingDays, item._remainingDays == 0 && !isFuture ? 'days-zero' : 'days-nonzero');
+    createChildItem(cols[startDateIndex], item._startDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._startDate.toDateString(), item._dueDate < item._startDate ? 'date-overdue' : 'date-under', item.links.length === 0);
+    createChildItem(cols[dueDateIndex], item._dueDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._dueDate.toDateString(), '', item.links.length === 0);
+    createChildItem(cols[acceptedDateIndex], item._endDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._endDate.toDateString(), item._dueDate < item._endDate ? 'date-overdue' : 'date-under', item.links.length === 0);
+    createChildItem(cols[remainingDaysIndex], item._remainingDays, item._remainingDays == 0 && !isFuture ? 'days-zero' : 'days-nonzero', item.links.length === 0);
+
+    // if (orderIndex > -1) {
+    //   cols[orderIndex].textContent = item.order;
+    // }
   }
 
-  acceptedDateColumn.textContent = 'End Date';
+  var titleElem = acceptedDateColumn.getElementsByClassName('title')[0];
+  titleElem.textContent = 'End Date';
 
   // isPopulated = true;
 }
 
-function createChildItem(elem, str, classx) {
+function createChildItem(elem, str, classx, isWorkItem) {
   var div = document.createElement('div');
+
+  classx += isWorkItem ? ' workitem' : ' owner';
+
   div.setAttribute('class', classx);
   div.textContent = str;
   elem.innerHTML = '';
