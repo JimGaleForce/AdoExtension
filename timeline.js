@@ -1,9 +1,14 @@
 var items = [];
-const urlBase2 = 'https://microsoft.visualstudio.com/Edge/';
+var epicQueryId = null;
+var urlBase2;
 
 async function loadData() {
-  //const queryId = 'My%20Queries/exttest-KRanddown';
-  var urlFull = "https://microsoft.visualstudio.com/Edge/_apis/wit/wiql/bdfa239d-7383-475e-b05d-b5d68d738109";
+  if (epicQueryId === null || epicQueryId.length === 0) {
+    console.log('no epicQueryId found');
+    return;
+  }
+
+  var urlFull = urlBase2 + "_apis/wit/wiql/" + epicQueryId;
   await httpGetAsync(loadKRquery, urlFull);
 }
 
@@ -118,6 +123,10 @@ function checkOverall3() {
 
 function addTabPage() {
   var pivotBar = document.getElementsByClassName('vss-HubHeader')[0];
+  if (typeof pivotBar === 'undefined') {
+    return;
+  }
+
   var tab = document.createElement('span');
   tab.innerHTML = '<button id="newpage-btn">list</button>';
   pivotBar.appendChild(tab);
@@ -515,4 +524,15 @@ async function httpGetAsync2(callback, theUrl) {
   xmlHttp.send(null);
 }
 
-loadData();
+async function loadInitialTimelineData() {
+  try {
+    urlBase2 = document.URL.substring(0, document.URL.indexOf('_'));
+    var data = await chrome.storage.sync.get(['adoxData']);
+    epicQueryId = data.adoxData.epicQueryId;
+    loadData();
+  } catch {
+    failed = true;
+  }
+}
+
+loadInitialTimelineData();

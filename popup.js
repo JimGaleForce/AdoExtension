@@ -9,6 +9,7 @@ async function saveColors(event) {
   }
 
   adoxData.queryId = document.getElementById('queryId').value;
+  adoxData.epicQueryId = document.getElementById('epicQueryId').value;
 
   await chrome.storage.sync.set({ adoxData: adoxData });
   await chrome.runtime.sendMessage('adox-colors-updated', async _ => { });
@@ -30,6 +31,10 @@ async function loadColors(failed = false) {
 
   if (typeof adoxData.queryId === 'undefined') {
     adoxData.queryId = '';
+  }
+
+  if (typeof adoxData.epicQueryId === 'undefined') {
+    adoxData.epicQueryId = '';
   }
 
   if (failed || typeof adoxData.colors === 'undefined') {
@@ -76,6 +81,7 @@ async function loadColorsIntoBoxes() {
   }
 
   document.getElementById('queryId').value = adoxData.queryId;
+  document.getElementById('epicQueryId').value = adoxData.epicQueryId;
 }
 
 loadColorsIntoBoxes();

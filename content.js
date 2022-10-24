@@ -22,6 +22,10 @@ async function loadColors(failed = false) {
     adoxData.queryId = '';
   }
 
+  if (typeof adoxData.epicQueryId === 'undefined') {
+    adoxData.epicQueryId = '';
+  }
+
   if (failed || typeof adoxData.colors === 'undefined') {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       // dark mode

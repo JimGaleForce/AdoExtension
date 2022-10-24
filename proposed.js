@@ -169,12 +169,12 @@ async function httpGetAsync(callback, theUrl) {
 
 function getData() {
   urlBase = document.URL.substring(0, document.URL.indexOf('_'));
-  var urlFull = urlBase + "/_apis/wit/queries/" + queryId;
+  var urlFull = urlBase + "_apis/wit/queries/" + queryId;
   getQueryId();
 }
 
 function getQueryId() {
-  var url = urlBase + "/_apis/wit/wiql/" + queryId + "?api-version=2.2";
+  var url = urlBase + "_apis/wit/wiql/" + queryId + "?api-version=2.2";
   httpGetAsync(getDataIds, url);
 }
 
@@ -194,7 +194,7 @@ function getDataIds(data) {
 
   ids = ids.substr(0, ids.length - 1);
 
-  httpGetAsync(getDataCreateTable, urlBase + "/_apis/wit/workitems?ids=" + ids + "&fields=System.State,System.AssignedTo,OSG.RemainingDays,System.IterationLevel3,System.WorkItemType,Microsoft.VSTS.CMMI.TaskType&api-version=6.0");
+  httpGetAsync(getDataCreateTable, urlBase + "_apis/wit/workitems?ids=" + ids + "&fields=System.State,System.AssignedTo,OSG.RemainingDays,System.IterationLevel3,System.WorkItemType,Microsoft.VSTS.CMMI.TaskType&api-version=6.0");
 }
 
 function createNewTableItem(name) {
