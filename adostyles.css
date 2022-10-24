@@ -32,3 +32,23 @@
 .tcell {
   padding: 4px;
 }
+
+.person-cell {
+  background-color: green;
+  height: 18px;
+  opacity: 0.75;
+  border-right: 1px solid black;
+}
+
+.person-group {
+  display: flex;
+}
+
+.people {
+  padding: 50px;
+}
+
+.person-name {
+  display: inline-block;
+  padding-top: 40px;
+}

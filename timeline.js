@@ -132,10 +132,10 @@ function addTabPage() {
   }
 
   var tab = document.createElement('span');
-  tab.innerHTML = '<button id="newpage-btn">list</button>';
+  tab.innerHTML = '<button id="newpage-btn">Graph Timeline</button>';
   pivotBar.appendChild(tab);
   window.setTimeout(() => {
-    document.getElementById('newpage-btn').addEventListener('click', newpage);
+    document.getElementById('newpage-btn').addEventListener('click', e => createTimeGraphs(e)); //newpage
   }, 250);
 }
 
@@ -549,6 +549,73 @@ async function httpGetAsync2(callback, theUrl) {
   }
   xmlHttp.open("GET", theUrl, true);
   xmlHttp.send(null);
+}
+
+function createTimeGraphs(event) {
+  var startDate = new Date(Date.parse('2022-10-24'));
+  var endDate = new Date(Date.parse('2022-12-24'));
+
+  var set = [];
+  var keys = Object.keys(people);
+  var lastDate = startDate;
+  var maxDays = 0;
+  for (var ip = 0; ip < keys.length; ip++) {
+    var person = people[keys[ip]];
+
+    var pItems = items.filter(i => i._startDate >= startDate && i._dueDate <= endDate && i.assignedTo.id === person.id && i.links.length === 0).sort((a, b) => a._startDate - b._startDate);
+    var ikeys = Object.keys(pItems);
+    var totalDays = 0;
+    for (var ii = 0; ii < ikeys.length; ii++) {
+      totalDays += pItems[ikeys[ii]].remainingDays;
+    }
+
+    set.push({ person: person, items: pItems, totalDays: totalDays });
+    if (pItems.length > 0 && pItems[pItems.length - 1]._dueDate > lastDate) {
+      lastDate = pItems[pItems.length - 1]._dueDate;
+    }
+
+    if (maxDays < totalDays) {
+      maxDays = totalDays;
+    }
+  }
+
+  var sb = '<div class="people">';
+  for (var ix = 0; ix < set.length; ix++) {
+    var setitem = set[ix];
+    var pItems = setitem.items;
+    var ikeys = Object.keys(pItems);
+    var currentDays = 0;
+    var currentIteration = ''
+    var currentIterationIndex = -1;
+    sb += '<div class="person-group">';
+    sb += '<div class="person-name">' + setitem.person.displayName + '</div>';
+    sb += '</div><div class="person-group">';
+    for (var ii = 0; ii < ikeys.length; ii++) {
+      var pItem = pItems[ikeys[ii]];
+      pItem._percentStart = currentDays / maxDays;
+      pItem._percentLen = pItem.remainingDays / maxDays;
+      pItem._percentEnd = (currentDays + pItem.remainingDays) / maxDays;
+
+      if (pItem.iteration !== currentIteration) {
+        currentIteration = pItem.iteration;
+        currentIterationIndex++;
+      }
+
+      pItem._percentLine = currentIterationIndex;
+      sb += '<span class="person-cell" style="width:' + (pItem._percentLen * 100) + '%;"></span>';
+    }
+    sb += '</div>';
+  }
+  sb += '</div>';
+
+  var content = document.getElementsByClassName('vss-PivotBar--content')[0];
+  content.setAttribute('class', 'vss-PivotBar--content x-hide');
+  loadFile(chrome.runtime.getURL('timeline.html'), _ => afterLoadGraph(sb));
+}
+
+function afterLoadGraph(sb) {
+  var grid = document.getElementById('content');
+  grid.innerHTML = sb;
 }
 
 async function loadInitialTimelineData() {
