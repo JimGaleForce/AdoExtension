@@ -95,12 +95,12 @@ async function checkOverall2() {
 
   window.clearInterval(tick2);
 
-  overall3 = iterations.length;
-  for (var i = 0; i < iterations.length; i++) {
-    const iter = iterations[i];
-    var url = 'https://microsoft.visualstudio.com/Edge/cea6b33d-07fa-4fc1-80ce-901febc2047b/_apis/work/teamsettings/iterations/' + iterations[i].id + '/capacities?api-version=6.0';
-    await httpGetAsync2(data => getCapacityData(data, iter), url);
-  }
+  // overall3 = iterations.length;
+  // for (var i = 0; i < iterations.length; i++) {
+  //   const iter = iterations[i];
+  //   var url = 'https://microsoft.visualstudio.com/Edge/cea6b33d-07fa-4fc1-80ce-901febc2047b/_apis/work/teamsettings/iterations/' + iterations[i].id + '/capacities?api-version=6.0';
+  //   await httpGetAsync2(data => getCapacityData(data, iter), url);
+  // }
 
   tick3 = window.setInterval(checkOverall3, 100);
 }
