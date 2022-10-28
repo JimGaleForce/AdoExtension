@@ -180,7 +180,7 @@ function afterLoadNew() {
   var sb = '';
   var xitems = items.filter(i => i.links.length === 0 && i.assignedTo.id === id).sort((a, b) => a._startDate - b._startDate).map(
     item => {
-      sb += '<tr class="trow"><td class="tcell">' + item._startDate.toDateString() + '</td><td class="tcell">' + item._endDate.toDateString() + '</td><td class="tcell">' + item._remainingDays + '</td><td class="tcell">' + item.title + '</td></tr>';
+      sb += '<tr class="trow"><td class="tcell">' + item._startDate.toDateString() + '</td><td class="tcell">' + item._endDate.toDateString() + '</td><td class="tcell">' + Math.round(100 * item._remainingDays) / 100 + '</td><td class="tcell">' + item.title + '</td></tr>';
     }
   )
 
@@ -356,7 +356,7 @@ function populate() {
     createChildItem(cols[startDateIndex], item._startDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._startDate.toDateString(), item._dueDate < item._startDate ? 'date-overdue' : 'date-under', item.links.length === 0);
     createChildItem(cols[dueDateIndex], item._dueDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._dueDate.toDateString(), '', item.links.length === 0);
     createChildItem(cols[acceptedDateIndex], item._endDate.getYear() + 1900 > 2047 ? 'FUTURE' : item._endDate.toDateString(), item._dueDate < item._endDate ? 'date-overdue' : 'date-under', item.links.length === 0);
-    createChildItem(cols[remainingDaysIndex], item._remainingDays, item._remainingDays == 0 && !isFuture ? 'days-zero' : 'days-nonzero', item.links.length === 0);
+    createChildItem(cols[remainingDaysIndex], Math.round(100 * item._remainingDays) / 100, item._remainingDays == 0 && !isFuture ? 'days-zero' : 'days-nonzero', item.links.length === 0);
 
     if (orderIndex > -1) {
       cols[orderIndex].textContent = item.order;
