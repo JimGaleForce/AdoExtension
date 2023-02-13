@@ -93,6 +93,7 @@ async function highLine() {
     return;
   }
 
+  var r;
   for (r = 0; r < rows.length; r++) {
     var g = rows[r];
     for (var c = 0; c < colors.length; c++) {

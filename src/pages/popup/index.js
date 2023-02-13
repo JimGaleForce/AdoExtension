@@ -1,4 +1,3 @@
-'use script';
 var adoxData;
 async function saveColors(event) {
   var data = await chrome.storage.sync.get(['adoxData']);
