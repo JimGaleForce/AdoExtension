@@ -1,0 +1,116 @@
+<html>
+
+<head>
+  <title>ADO Extension</title>
+  <link rel="stylesheet" href="index.css">
+  <style>
+    #adox-colors {
+      display: flex;
+    }
+
+    .adox-btn {
+      width: 80px;
+    }
+
+    .adox-id {
+      padding-top: 10px;
+      font-size: x-small;
+      bottom: -30px;
+    }
+
+    .adox-right {
+      right: 10px;
+      position: absolute;
+      text-align: right;
+    }
+
+    .button-8 {
+      background-color: #e1ecf4;
+      border-radius: 3px;
+      border: 1px solid #7aa7c7;
+      box-shadow: rgba(255, 255, 255, .7) 0 1px 0 0 inset;
+      box-sizing: border-box;
+      color: #39739d;
+      cursor: pointer;
+      display: inline-block;
+      font-family: -apple-system, system-ui, "Segoe UI", "Liberation Sans", sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.15385;
+      margin: 0;
+      outline: none;
+      padding: 8px .8em;
+      position: relative;
+      text-align: center;
+      text-decoration: none;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      vertical-align: baseline;
+      white-space: nowrap;
+      height: 30px;
+      padding-top: 5px;
+    }
+
+    .button-8:hover,
+    .button-8:focus {
+      background-color: #b3d3ea;
+      color: #2c5777;
+    }
+
+    .button-8:focus {
+      box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
+    }
+
+    .button-8:active {
+      background-color: #a0c7e4;
+      box-shadow: none;
+      color: #2c5777;
+    }
+
+    #queryId {
+      width: 80px;
+      font-size: x-small;
+      border: 1px solid #ccc;
+      border-radius: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div>Line Colors</div>
+  <div>
+    <div id="adox-colors">
+      <input type="color" id="color1" onchange="clickColor(0, -1, -1, 5)" value="#ff0000"
+        style="width:16px;height:20px;border:none;padding:0;">
+      <input type="color" id="color2" onchange="clickColor(0, -1, -1, 5)" value="#ff0000"
+        style="width:16px;height:20px;border:none;padding:0;">
+      <input type="color" id="color3" onchange="clickColor(0, -1, -1, 5)" value="#ff0000"
+        style="width:16px;height:20px;border:none;padding:0;">
+      <input type="color" id="color4" onchange="clickColor(0, -1, -1, 5)" value="#ff0000"
+        style="width:16px;height:20px;border:none;padding:0;">
+      <input type="color" id="color5" onchange="clickColor(0, -1, -1, 5)" value="#ff0000"
+        style="width:16px;height:20px;border:none;padding:0;">
+    </div>
+    <br>
+    <div>Query ID</div>
+    <div>
+      <input type="text" id="queryId" value="">
+    </div>
+    <br>
+  </div>
+  <div>
+    <button class="adox-btn button-8" role="button" id="adox-save">Save</button>
+    <button class="adox-btn button-8" role="button" id="adox-reset">Reset</button>
+    <button class="adox-btn button-8" role="button" id="adox-cancel">Cancel</button>
+  </div>
+
+  <div class="adox-id"><span>ver: 0.5.4</span><span class="adox-right"><a
+        href='https://github.com/JimGaleForce/AdoExtension' target="_blank">repo</a></span></div>
+
+  <script src="highlight.js" type="text/javascript">
+  </script>
+
+</body>
+
+</html>

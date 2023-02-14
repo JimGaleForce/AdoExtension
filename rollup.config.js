@@ -36,4 +36,9 @@ export default {
     isProduction && uglify(),
     isProduction && zip({ dir: 'releases' }),
   ],
+  watch: {
+    chokidar: {
+        paths: 'src/**'
+    }
+  }
 }
