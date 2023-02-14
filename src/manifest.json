@@ -3,7 +3,7 @@
   "background": {
     "service_worker": "background.ts"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "alarms"],
   "content_scripts": [
     {
       "js": [
