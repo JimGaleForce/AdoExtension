@@ -9,6 +9,7 @@ import { emptyDir } from 'rollup-plugin-empty-dir'
 import { uglify } from "rollup-plugin-uglify";
 import zip from 'rollup-plugin-zip'
 import replace from '@rollup/plugin-replace'
+import postcss from 'rollup-plugin-postcss'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -29,6 +30,7 @@ export default {
     }),
     chromeExtension(),
     simpleReloader(),
+    postcss({minimize: isProduction}),
     resolve(),
     commonjs(),
     typescript(),
