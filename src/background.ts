@@ -1,4 +1,5 @@
 import { GetBatchItemDetails, GetItemsFromIteration, GetIterations } from "./ado/api";
+import { loadConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
 
@@ -26,18 +27,15 @@ chrome.alarms.create(
 
 chrome.alarms.onAlarm.addListener(
   async function(alarm) {
-    //TODO: read these from the extension popup
-    const organization = "";
-    const project = "";
-    const team = ""
+    const config = await loadConfig();
 
-    const iterationsJson = await GetIterations(organization, project, team, true);
+    const iterationsJson = await GetIterations(config, true);
     const currentIterationId = iterationsJson.value[0].id;
 
-    const itemsJson = await GetItemsFromIteration(organization, project, team, currentIterationId);
+    const itemsJson = await GetItemsFromIteration(config, currentIterationId);
     const itemIdsList = itemsJson.workItemRelations.map((item: any) => item.target.id);
 
-    const itemsDetailsJson = await GetBatchItemDetails(organization, project, itemIdsList);
+    const itemsDetailsJson = await GetBatchItemDetails(config, itemIdsList);
     const itemDetails = itemsDetailsJson.value;
     console.log(itemDetails);
   }

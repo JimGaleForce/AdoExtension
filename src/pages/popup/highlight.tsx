@@ -1,36 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { AdoConfigData, baseConfig, loadConfig, saveConfig } from '../../models/adoConfig';
 
-type AdoConfigData = {
-    queryId: string
-    colors: string[]
-    email: string
-    organization: string
-    project: string
-    team: string
-}
-
-const baseConfig: AdoConfigData = {
-    queryId:"",
-    colors: [
-        '#ccFFcc',
-        '#FFFFcc',
-        '#FFcccc',
-        '#ccccFF',
-        '#ccFFFF'
-    ],
-    email: "",
-    organization: "microsoft",
-    project: "Edge",
-    team: ""
-}
 
 const Highlight = (): JSX.Element => {
     const [adoxData, setAdoxData] = useState<AdoConfigData>(baseConfig);
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(null);
 
-    const saveConfig = async () => {
-        await chrome.storage.sync.set({ adoxData });
+    const save = async () => {
+        await saveConfig(adoxData)
         console.log("Saved config");
     }
 
@@ -78,9 +56,9 @@ const Highlight = (): JSX.Element => {
 
     // Load colors from storage
     useEffect(() => {
-        chrome.storage.sync.get(['adoxData'])
+        loadConfig()
             .then(data => {
-                setAdoxData({ ...baseConfig, ...data.adoxData });
+                setAdoxData(data);
                 setLoaded(true);
             })
             .catch(error => {
@@ -246,7 +224,7 @@ const Highlight = (): JSX.Element => {
                         <button
                             type="submit"
                             className="ml-3 inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            onClick={() => saveConfig().then(() => window.close())}
+                            onClick={() => save().then(() => window.close())}
                         >
                             Save
                         </button>
