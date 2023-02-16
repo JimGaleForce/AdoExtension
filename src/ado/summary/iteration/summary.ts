@@ -1,13 +1,14 @@
 import dayjs from "dayjs";
-import { AdoConfigData, loadConfig } from "../../models/adoConfig";
-import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../models/adoSummary";
-import { IterationItemParser } from "../../models/adoSummary/iteration";
-import { WorkItemTags } from "../../models/ItemTag";
-import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../api";
+import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
+import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../../models/adoSummary";
+import { IterationItemParser } from "../../../models/adoSummary/iteration";
+import { WorkItemTags } from "../../../models/ItemTag";
+import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
+import { CapacityParser } from "./parser";
 
 
 const IterationSummaryParser: IterationItemParser[] = [
-
+    CapacityParser
 ]
 
 // Generates a proper ADO Summary for a given iteration 
