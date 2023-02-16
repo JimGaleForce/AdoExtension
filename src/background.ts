@@ -1,4 +1,4 @@
-import { GetBatchItemDetails, GetItemsFromIteration, GetIterations } from "./ado/api";
+import { GetItemsFromIteration, GetIterations } from "./ado/api";
 import { loadConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
@@ -17,7 +17,6 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-
 chrome.alarms.create(
   {
     periodInMinutes: 0.5 // for testing purposes only
@@ -33,10 +32,12 @@ chrome.alarms.onAlarm.addListener(
     const currentIterationId = iterationsJson.value[0].id;
 
     const itemsJson = await GetItemsFromIteration(config, currentIterationId);
-    const itemIdsList = itemsJson.workItemRelations.map((item: any) => item.target.id);
+    const currentItemIds = itemsJson.workItemRelations.map((item: any) => item.target.id);
 
-    const itemsDetailsJson = await GetBatchItemDetails(config, itemIdsList);
-    const itemDetails = itemsDetailsJson.value;
-    console.log(itemDetails);
+    const data = await chrome.storage.sync.get([currentIterationId]);
+    const pastItemIds = data[currentIterationId] ?? [];
+
+    // Remove duplicate item ids and then store.
+    chrome.storage.sync.set({[currentIterationId]:[...new Set(currentItemIds.concat(pastItemIds))]});
   }
 )
