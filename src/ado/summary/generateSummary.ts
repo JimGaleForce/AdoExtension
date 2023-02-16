@@ -1,8 +1,13 @@
 import dayjs from "dayjs";
 import { AdoConfigData, loadConfig } from "../../models/adoConfig";
-import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../models/adoSummary";
+import { GetWorkItemsFromStorageByIteration, ItemParser, ItemSummary, IterationSummary } from "../../models/adoSummary";
 import { WorkItemTag } from "../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../api";
+
+
+const IterationSummaryParser: ItemParser<WorkItemTag>[] = [
+
+]
 
 // Generates a proper ADO Summary for a given iteration 
 export default async function GenerateADOSummary(iterationId: string) {
@@ -59,8 +64,12 @@ async function parseWorkItem(config: AdoConfigData, workItemId: number, startDat
         if (revisedDate.isBefore(startDate) || revisedDate.isAfter(finishDate)) {
             continue;
         }
-        
-        // All history events post iteration start
+
+        // Parse the work item using all parsers defined in the IterationSummaryParser.
+        // The parser will update the `workItemSummary.tags` object directly
+        for (const parser of IterationSummaryParser) {
+            await parser(workItem, workItemSummary.tags);
+        }
     }
 
     return workItemSummary;

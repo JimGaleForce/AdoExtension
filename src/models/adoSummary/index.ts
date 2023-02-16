@@ -1,14 +1,14 @@
-import { Iteration } from "../adoApi"
+import { Iteration, WorkItem } from "../adoApi"
 import { TagData, WorkItemTag } from "../ItemTag"
 
-
+export type ItemSummaryTags<T extends TagData> = {
+    [key in T['type']]?: T
+}
 
 export type ItemSummary<T extends TagData> = { 
     id: number
     title: string
-    tags: {
-        [key in T['type']]?: T
-    }
+    tags: ItemSummaryTags<T>
 }
 
 export interface IterationSummary {
@@ -22,3 +22,5 @@ export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promis
         resolve(data[iterationId] ?? []);
     }) 
 }
+
+export type ItemParser<T extends TagData> = (item: WorkItem, tags: ItemSummaryTags<T>) => Promise<void>;
