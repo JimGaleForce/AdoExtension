@@ -14,4 +14,4 @@ export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promis
     }) 
 }
 
-export type IterationItemParser = ItemParser<Partial<WorkItemTags>>
+export type IterationItemParser = ItemParser<WorkItemTags>

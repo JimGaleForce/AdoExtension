@@ -54,11 +54,7 @@ async function parseWorkItem(config: AdoConfigData, workItemId: number, startDat
     const workItem = await GetWorkItem(config, workItemId, startDateStr)
     const workItemHistory = await GetWorkItemHistory(config, workItemId);
 
-    let workItemSummary: ItemSummary<WorkItemTags> = {
-        id: workItemId,
-        title: workItem.fields["System.Title"],
-        tags: {}
-    }
+    let tags: Partial<WorkItemTags> = {}
 
     for (const historyEvent of workItemHistory.value) {
         // Ignore any events that occured outside of our desired timeframe
@@ -70,9 +66,13 @@ async function parseWorkItem(config: AdoConfigData, workItemId: number, startDat
         // Parse the work item using all parsers defined in the IterationSummaryParser.
         // The parser will update the `workItemSummary.tags` object directly
         for (const parser of IterationSummaryParser) {
-            await parser(workItem, workItemSummary.tags);
+            tags = await parser(workItem, tags);
         }
     }
 
-    return workItemSummary;
+    return {
+        id: workItemId,
+        title: workItem.fields["System.Title"],
+        tags: tags
+    }
 }

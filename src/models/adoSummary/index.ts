@@ -19,4 +19,4 @@ export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promis
     }) 
 }
 
-export type ItemParser<T> = (item: WorkItem, tags: T) => Promise<void>;
+export type ItemParser<T> = (item: WorkItem, tags: Partial<T>) => Promise<Partial<T>>;
