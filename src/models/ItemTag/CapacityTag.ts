@@ -1,10 +1,10 @@
-import { TagData } from "./TagData"
+import { BaseTag } from "./BaseTag"
 
-export type CapacityTag = TagData &  {
-    type: 'capacity'
-    bar: string
+export type Capacity = {
+    timeAdded: number
+    timeRemoved: number
 }
 
-export function isCapacityTag(tag: TagData): tag is CapacityTag {
-    return (tag as CapacityTag).type === 'capacity'
+export type CapacityTag = BaseTag & {
+    capacity: Capacity
 }

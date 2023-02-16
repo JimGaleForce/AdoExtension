@@ -1,16 +1,17 @@
 import dayjs from "dayjs";
 import { AdoConfigData, loadConfig } from "../../models/adoConfig";
-import { GetWorkItemsFromStorageByIteration, ItemParser, ItemSummary, IterationSummary } from "../../models/adoSummary";
-import { WorkItemTag } from "../../models/ItemTag";
+import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../models/adoSummary";
+import { IterationItemParser } from "../../models/adoSummary/iteration";
+import { WorkItemTags } from "../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../api";
 
 
-const IterationSummaryParser: ItemParser<WorkItemTag>[] = [
+const IterationSummaryParser: IterationItemParser[] = [
 
 ]
 
 // Generates a proper ADO Summary for a given iteration 
-export default async function GenerateADOSummary(iterationId: string) {
+export async function SummaryForIteration(iterationId: string) {
     // Get all items from the specified iteration.
     // For each item:
     // - Get state of item as it was during the start of the specified iteration 
@@ -46,17 +47,17 @@ export default async function GenerateADOSummary(iterationId: string) {
     
 }
 
-async function parseWorkItem(config: AdoConfigData, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTag> | null> {
+async function parseWorkItem(config: AdoConfigData, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
     const workItem = await GetWorkItem(config, workItemId, startDateStr)
     const workItemHistory = await GetWorkItemHistory(config, workItemId);
 
-    let workItemSummary: ItemSummary<WorkItemTag> = {
-        id: workItem.id,
+    let workItemSummary: ItemSummary<WorkItemTags> = {
+        id: workItemId,
         title: workItem.fields["System.Title"],
         tags: {}
-    };
+    }
 
     for (const historyEvent of workItemHistory.value) {
         // Ignore any events that occured outside of our desired timeframe

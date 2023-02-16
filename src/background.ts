@@ -1,4 +1,4 @@
-import { GenerateADOSummary } from "./ado/summary";
+import { SummaryForIteration } from "./ado/summary";
 import { GetItemsFromIteration, GetIterations } from "./ado/api";
 import { loadConfig } from "./models/adoConfig";
 
@@ -45,5 +45,5 @@ chrome.alarms.onAlarm.addListener(
 
 // Temporary code. Need to reference this function so that the file gets watched.
 if (false) {
-  GenerateADOSummary("fake-iteration-id", []);
+  SummaryForIteration("fake-iteration-id");
 }

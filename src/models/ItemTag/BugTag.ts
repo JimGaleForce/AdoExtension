@@ -1,10 +1,5 @@
-import { TagData } from "./TagData"
+import { BaseTag } from "./BaseTag"
 
-export type BugTag = TagData & {
-    type: 'bug'
-    foo: string
-}
-
-export function isBugTag(tag: TagData): tag is BugTag {
-    return (tag as BugTag).type === 'bug'
+export type BugTag = BaseTag & {
+    bugStatus: 'Resolved' | 'Proposed'
 }
