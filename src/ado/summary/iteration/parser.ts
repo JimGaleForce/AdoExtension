@@ -1,7 +1,6 @@
-import { WorkItem } from "../../../models/adoApi";
-import { WorkItemTags } from "../../../models/ItemTag";
+import { IterationItemParser } from "../../../models/adoSummary/iteration";
 
-export const CapacityParser: (item: WorkItem, tags: Partial<WorkItemTags>) => Partial<WorkItemTags> = (item, tags) => {
+export const CapacityParser: IterationItemParser = async (item, tags) => {
     if (item.id == 1) {
         return {
             ...tags,
