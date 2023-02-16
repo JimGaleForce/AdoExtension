@@ -1,4 +1,5 @@
 import { GetBatchItemDetails, GetItemsFromIteration, GetIterations } from "./ado/api";
+import { GenerateADOSummary } from "./ado/summary";
 import { loadConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
@@ -40,3 +41,8 @@ chrome.alarms.onAlarm.addListener(
     console.log(itemDetails);
   }
 )
+
+// Temporary code. Need to reference this function so that the file gets watched.
+if (false) {
+  GenerateADOSummary("fake-iteration-id", []);
+}

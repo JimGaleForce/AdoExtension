@@ -39,6 +39,8 @@ export default {
     isProduction && zip({ dir: 'releases' }),
   ],
   watch: {
+    clearScreen: true,
+    include: 'src/**/*',
     chokidar: {
         paths: 'src/**'
     }

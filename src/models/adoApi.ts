@@ -1,4 +1,8 @@
-type Timeframe = "past" | "current" | "future"
+export type Timeframe = "past" | "current" | "future"
+
+export type Href = {
+    href: string
+}
 
 export type Iteration = {
     id: string
@@ -10,6 +14,17 @@ export type Iteration = {
         timeFrame: Timeframe
     }
     url: string
+    _links?: {
+        self?: Href
+        project?: Href
+        team?: Href
+        teamSettings?: Href
+        teamIterations?: Href
+        capacity?: Href
+        workitems?: Href
+        classificationNode?: Href
+        teamDaysOff?: Href
+    }
 }
 
 export type ListIteration = {
@@ -31,19 +46,11 @@ export type WorkItemRelation = {
 export type IterationWorkItems = {
     workItemRelations: WorkItemRelation[]
     url: string
-    "_links": {
-        self: {
-            href: string
-        }
-        project: {
-            href: string
-        }
-        team: {
-            href: string
-        }
-        teamIteration: {
-            href: string
-        }
+    _links: {
+        self?: Href
+        project?: Href
+        team?: Href
+        teamIteration?: Href
     }
 }
 
@@ -56,10 +63,8 @@ export type AdoUser = {
     uniqueName: string
     imageUrl: string
     descriptor: string
-    "_links": {
-        avatar: {
-            href: string
-        }
+    _links: {
+        avatar: Href
     }
 }
 
@@ -88,6 +93,16 @@ export type WorkItem = {
     id: number
     rev: number
     fields: WorkItemFields
+    _links: {
+        self?: Href
+        workItemUpdates?: Href
+        workItemRevisions?: Href
+        workItemComments?: Href
+        html?: Href
+        workItemType?: Href
+        fields?: Href
+        parent?: Href
+    }
     url: string
 }
 

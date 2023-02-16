@@ -1,4 +1,4 @@
-import { BatchWorkItems, IterationWorkItems, ListIteration, WorkItemHistory } from "../../models/adoApi";
+import { BatchWorkItems, Iteration, IterationWorkItems, ListIteration, WorkItem, WorkItemHistory } from "../../models/adoApi";
 import { AdoConfigData } from "../../models/adoConfig";
 
 export async function GetIterations(
@@ -10,6 +10,38 @@ export async function GetIterations(
 
     const json = await fetch(url).then((response) => response.json());
     return json as ListIteration;
+}
+
+export async function GetIterationWorkItems(
+    config: AdoConfigData,
+    iterationId: string): Promise<IterationWorkItems> {
+    const { organization, project, team } = config;
+    let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}/workitems?api-version=7.0`;
+
+    const json = await fetch(url).then((response) => response.json());
+    return json as IterationWorkItems;
+}
+
+export async function GetIteration(config: AdoConfigData, iterationId: string): Promise<Iteration> {
+    const { organization, project, team } = config;
+    let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}?api-version=7.0`;
+
+    const json = await fetch(url).then((response) => response.json());
+    return json as Iteration;
+}
+
+export async function GetCurrentIteration(config: AdoConfigData): Promise<Iteration> {
+    
+    const iterations = await GetIterations(config, true);
+    if (iterations.count !== 1 || iterations.value.length !== 1) {
+        throw new Error(`Expected 1 iteration, got ${iterations.count}`)
+    }
+    
+    if (iterations.value[0].attributes.timeFrame !== "current") {
+        throw new Error(`Expected iteration to be current, got  ${iterations.value[0].attributes.timeFrame}`)
+    }
+
+    return iterations.value[0];
 }
 
 export async function GetItemsFromIteration(
@@ -51,10 +83,27 @@ export async function GetBatchItemDetails(
     return json as BatchWorkItems;
 }
 
-export async function GetItemHistory(config: AdoConfigData, workItem: string): Promise<WorkItemHistory> {
+export async function GetWorkItemHistory(config: AdoConfigData, workItemId: number): Promise<WorkItemHistory> {
     const { organization } = config;
-    const url = `https://dev.azure.com/${organization}/apis/wit/workItems/${workItem}/updates?api-version=7.0`
+    const url = `https://dev.azure.com/${organization}/apis/wit/workItems/${workItemId}/updates?api-version=7.0`
 
     const json = await fetch(url).then((response) => response.json());
     return json as WorkItemHistory;
+}
+
+/** 
+ * @throws {Error} if item does not exist
+ */
+export async function GetWorkItem(config: AdoConfigData, workItemId: number, asOf?: string): Promise<WorkItem> {
+    const { organization, project } = config;
+    const url = `https://dev.azure.com/${organization}/${project}/_apis/wit/workitems/${workItemId}?api-version=7.0${asOf ? `&asOf=${asOf}` : ""}`
+
+    const json = await fetch(url).then((response) => response.json());
+
+    // If we get an error (i.e. Work item does not exist at the specified datetime)
+    if (json.innerException && json.message) {
+        throw new Error(json.message);
+    }
+
+    return json as WorkItem;
 }
