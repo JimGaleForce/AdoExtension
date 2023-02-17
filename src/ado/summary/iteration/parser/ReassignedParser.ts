@@ -3,8 +3,10 @@ import { ReassignedTag } from "../../../../models/ItemTag/ReassignedTag";
 
 export const ReassignedParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags) => {
     let reassignedTag: ReassignedTag = {
-        reassignedOffOfMe: false,
-        reassignedToMe: false
+        reassigned: {
+            toMe: false,
+            fromMe: false
+        }
     }
 
     let assignedToMe = workItem.fields["System.AssignedTo"].uniqueName === config.email;
@@ -17,12 +19,12 @@ export const ReassignedParser: IterationItemParser = async (config, workItem, wo
 
         if (assignedToMe && newAssignedTo !== config.email) {
             assignedToMe = false;
-            reassignedTag.reassignedOffOfMe = true;
+            reassignedTag.reassigned.fromMe = true;
         }
 
         if (!assignedToMe && newAssignedTo === config.email) {
             assignedToMe = true;
-            reassignedTag.reassignedToMe = true;
+            reassignedTag.reassigned.toMe = true;
         }
     }
 

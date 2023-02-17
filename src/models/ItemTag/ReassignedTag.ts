@@ -1,6 +1,8 @@
 import { BaseTag } from "./BaseTag"
 
 export type ReassignedTag = BaseTag & {
-    reassignedToMe: boolean
-    reassignedOffOfMe: boolean
+    reassigned: {
+        toMe: boolean,
+        fromMe: boolean
+    }
 }
