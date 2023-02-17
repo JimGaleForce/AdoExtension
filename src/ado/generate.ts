@@ -1,10 +1,11 @@
-// import { SummaryForIteration } from "./summary";
-
 // (async () => {
 //   const src = chrome.runtime.getURL("ado/summary/*");
 //   const contentMain = await import(src);
 //   contentMain.main();
 // })();
+
+import { SummaryForIteration } from "./summary";
+
 
 async function addGenerateButton() {
   //TODO: check that we're on an iteration view first
@@ -29,7 +30,7 @@ function waitFirst() {
 
 function createSummaryAndOpen() {
   console.log(`Summary for f35df25f-e9d5-46da-9c92-e100da93cf3f`);
-  // SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
+  SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
 }
 
 waitFirst();

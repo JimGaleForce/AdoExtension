@@ -7,7 +7,7 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "ado/summary/iteration/*.ts"
+        "ado/*.ts"
       ],
       "matches": ["<all_urls>"]
     }
