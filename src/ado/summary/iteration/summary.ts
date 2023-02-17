@@ -4,11 +4,11 @@ import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } fro
 import { IterationItemParser } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
-import { CapacityParser } from "./parser";
+import { ReassignedParser } from "./parser";
 
 
 const IterationSummaryParser: IterationItemParser[] = [
-    CapacityParser
+    ReassignedParser
 ]
 
 // Generates a proper ADO Summary for a given iteration 
@@ -46,28 +46,50 @@ export async function SummaryForIteration(iterationId: string) {
         }
     }
     
+    console.log("Summary Done.")
+    console.log(summary);
 }
 
 async function parseWorkItem(config: AdoConfigData, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
-    const workItem = await GetWorkItem(config, workItemId, startDateStr)
     const workItemHistory = await GetWorkItemHistory(config, workItemId);
 
+
+    if (workItemHistory.count === 0) {
+        console.warn(`No history for item ${workItemId}. Skipping`);
+        return null;
+    }
+    
+    // Beacuse the work item may have been made after the sprint started, we need to see when the item was created.
+    // The first item in the work item history is the creation of the item and hence the timestamp of when it was created.
+    // We're going to grab the item as it was either at the start of the iteration, or creation date. Whichever is later.
+    const workItemCreatedAt = dayjs(workItemHistory.value[0].revisedDate)
+    const queryDate = workItemCreatedAt.isAfter(startDate) ? workItemHistory.value[0].revisedDate : startDateStr;
+    const workItem = await GetWorkItem(config, workItemId, queryDate)
+
     let tags: Partial<WorkItemTags> = {}
+    // Ignore any events that occured outside of our desired timeframe
+    const relevantHistoryEvents = workItemHistory.value.filter(historyEvent => {
+        const revisedDate = dayjs(historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.revisedDate)
+        return revisedDate.isAfter(startDate) && revisedDate.isBefore(finishDate)
+    });
 
-    for (const historyEvent of workItemHistory.value) {
-        // Ignore any events that occured outside of our desired timeframe
-        const revisedDate = dayjs(historyEvent.revisedDate)
-        if (revisedDate.isBefore(startDate) || revisedDate.isAfter(finishDate)) {
-            continue;
-        }
 
-        // Parse the work item using all parsers defined in the IterationSummaryParser.
-        // The parser will update the `workItemSummary.tags` object directly
-        for (const parser of IterationSummaryParser) {
-            tags = await parser(workItem, workItemHistory, tags);
-        }
+    // Ignore this work item if not relevant to us
+    if (
+        workItem.fields["System.AssignedTo"].uniqueName !== config.email &&
+        !(relevantHistoryEvents.some(
+            historyEvent => historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName === config.email
+            )))
+    {
+        return null;
+    }
+
+    // Parse the work item using all parsers defined in the IterationSummaryParser.
+    // The parser will update the `workItemSummary.tags` object directly
+    for (const parser of IterationSummaryParser) {
+        tags = await parser(config, workItem, relevantHistoryEvents, tags);
     }
 
     return {

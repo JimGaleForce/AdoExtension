@@ -43,7 +43,10 @@ chrome.alarms.onAlarm.addListener(
   }
 )
 
-// Temporary code. Need to reference this function so that the file gets watched.
-if (false) {
-  SummaryForIteration("fake-iteration-id");
+
+async function Test() {
+  console.log(`Summary for f35df25f-e9d5-46da-9c92-e100da93cf3f`);
+  SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
 }
+
+// Test();
