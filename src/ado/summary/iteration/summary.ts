@@ -48,6 +48,7 @@ export async function SummaryForIteration(iterationId: string) {
 
     console.log("Summary Done.")
     console.log(summary);
+    return summary;
 }
 
 async function parseWorkItem(config: AdoConfigData, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {

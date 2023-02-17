@@ -1,9 +1,9 @@
 // import { SummaryForIteration } from "./summary";
 
 // (async () => {
-//   const src = chrome.runtime.getURL("ado/summary/*");
+//   const src = chrome.runtime.getURL("ado/summary");
 //   const contentMain = await import(src);
-//   contentMain.main();
+//   // contentMain.main();
 // })();
 
 async function addGenerateButton() {
@@ -27,9 +27,21 @@ function waitFirst() {
 }
 
 
-function createSummaryAndOpen() {
+async function createSummaryAndOpen() {
   console.log(`Summary for f35df25f-e9d5-46da-9c92-e100da93cf3f`);
-  // SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
+  // contentMain.SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
+  const iterationId = 'f35df25f-e9d5-46da-9c92-e100da93cf3f'
+  await chrome.storage.local.set({generate: iterationId});
+  await chrome.runtime.sendMessage('generate', (response) => {
+    const url = window.URL.createObjectURL(new Blob([response], {type: 'text/plain'}));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.target = '_blank';
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+  });
+
+
 }
 
 waitFirst();
