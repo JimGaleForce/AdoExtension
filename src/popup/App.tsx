@@ -1,4 +1,3 @@
-import React from 'react'
 import Highlight from './highlight';
 
 const App = (): JSX.Element => {

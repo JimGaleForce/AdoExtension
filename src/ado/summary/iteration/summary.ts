@@ -23,11 +23,17 @@ export async function SummaryForIteration(iterationId: string) {
     //
     // After this, output a markdown of all output items
 
+    console.log("1");
+
     const config = await loadConfig();
+
+    console.log("2");
 
     // First - get data about specified iteration (start date / end date)
     const iteration = await GetIteration(config, iterationId);
+    console.log("3");
     const workItemIds = await GetWorkItemsFromStorageByIteration(iterationId);
+    console.log("4");
 
     const {startDate, finishDate} = iteration.attributes;
 
@@ -48,7 +54,6 @@ export async function SummaryForIteration(iterationId: string) {
 
     console.log("Summary Done.")
     console.log(summary);
-    return summary;
 }
 
 async function parseWorkItem(config: AdoConfigData, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {

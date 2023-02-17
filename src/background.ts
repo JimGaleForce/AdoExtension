@@ -1,4 +1,5 @@
 import { GetItemsFromIteration, GetIterations } from "./ado/api";
+import { SummaryForIteration } from "./ado/summary";
 import { loadConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
@@ -45,23 +46,13 @@ chrome.alarms.onAlarm.addListener(
   }
 )
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message === 'generate') {
-    chrome.storage.local.get(['generate']).then(async (iterationId) => {
-      console.log('listener got iteration', iterationId.generate)
-      await SummaryForIteration(iterationId.generate).then(summary => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.action === "iterationSummary") { 
+    await SummaryForIteration(message.iterationId).then(summary => {
       //  chrome.storage.local.set({summary: summary})
       sendResponse(summary);
       });
-    })
-    chrome.storage.local.clear();
   }
 });
+
 loadLatestIteration();
-
-// async function Test() {
-//   console.log(`Summary for f35df25f-e9d5-46da-9c92-e100da93cf3f`);
-//   SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
-// }
-
-// Test();

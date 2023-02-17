@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AdoConfigData, baseConfig, loadConfig, saveConfig } from '../../models/adoConfig';
+import { AdoConfigData, baseConfig, loadConfig, saveConfig } from '../models/adoConfig';
 
 
 const Highlight = (): JSX.Element => {
