@@ -48,9 +48,9 @@ chrome.alarms.onAlarm.addListener(
 
 loadLatestIteration();
 
-async function Test() {
-  console.log(`Summary for f35df25f-e9d5-46da-9c92-e100da93cf3f`);
-  SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
-}
+// async function Test() {
+//   console.log(`Summary for f35df25f-e9d5-46da-9c92-e100da93cf3f`);
+//   SummaryForIteration('f35df25f-e9d5-46da-9c92-e100da93cf3f');
+// }
 
 // Test();

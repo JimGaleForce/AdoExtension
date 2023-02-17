@@ -4,10 +4,19 @@
     "service_worker": "background.ts"
   },
   "permissions": ["storage", "alarms"],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "ado/summary/iteration/*.ts"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "content_scripts": [
     {
       "js": [
         "ado/content.js",
+        "ado/generate.ts",
         "ado/proposed.js"
       ],
       "matches": [

@@ -11,16 +11,16 @@ const IterationSummaryParser: IterationItemParser[] = [
     ReassignedParser
 ]
 
-// Generates a proper ADO Summary for a given iteration 
+// Generates a proper ADO Summary for a given iteration
 export async function SummaryForIteration(iterationId: string) {
     // Get all items from the specified iteration.
     // For each item:
-    // - Get state of item as it was during the start of the specified iteration 
+    // - Get state of item as it was during the start of the specified iteration
     // - Get history of item, looking only at the changes during the sprint
     // - Figure out if item is of relevance to us in any capacity
-    // - Tag item with any metadata 
+    // - Tag item with any metadata
     // - Save item to output if relevant
-    // 
+    //
     // After this, output a markdown of all output items
 
     const config = await loadConfig();
@@ -41,11 +41,11 @@ export async function SummaryForIteration(iterationId: string) {
     // API limits.
     for (const workItemId of workItemIds) {
         const itemSummary = await parseWorkItem(config, workItemId, startDate, finishDate);
-        if (itemSummary !== null) { 
+        if (itemSummary !== null) {
             summary.workItems.push(itemSummary);
         }
     }
-    
+
     console.log("Summary Done.")
     console.log(summary);
 }
@@ -60,7 +60,7 @@ async function parseWorkItem(config: AdoConfigData, workItemId: number, startDat
         console.warn(`No history for item ${workItemId}. Skipping`);
         return null;
     }
-    
+
     // Beacuse the work item may have been made after the sprint started, we need to see when the item was created.
     // The first item in the work item history is the creation of the item and hence the timestamp of when it was created.
     // We're going to grab the item as it was either at the start of the iteration, or creation date. Whichever is later.

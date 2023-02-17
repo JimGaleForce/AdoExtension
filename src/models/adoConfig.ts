@@ -27,7 +27,7 @@ export const loadConfig: () => Promise<AdoConfigData> = () => {
         const data = await chrome.storage.sync.get(['adoxData']);
         const config = data.adoxData ?? {};
         resolve({...baseConfig, ...config});
-    }) 
+    })
 }
 
 export const saveConfig = async (config: AdoConfigData) => {
