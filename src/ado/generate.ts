@@ -30,10 +30,18 @@ function waitFirst() {
 
 async function createSummaryAndOpen() {
   console.log(`Summary for f35df25f-e9d5-46da-9c92-e100da93cf3f`);
-  await chrome.runtime.sendMessage({
+  let resp = await chrome.runtime.sendMessage({
     action: 'iterationSummary',
     iterationId: 'f35df25f-e9d5-46da-9c92-e100da93cf3f'
   });
+  console.log(resp);
 }
 
 waitFirst();
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    console.log("Got response");
+    console.log(request);
+  }
+);
