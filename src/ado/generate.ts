@@ -1,10 +1,11 @@
-// import { SummaryForIteration } from "./summary";
-
 // (async () => {
 //   const src = chrome.runtime.getURL("ado/summary");
 //   const contentMain = await import(src);
 //   // contentMain.main();
 // })();
+
+import { SummaryForIteration } from "./summary";
+
 
 async function addGenerateButton() {
   //TODO: check that we're on an iteration view first

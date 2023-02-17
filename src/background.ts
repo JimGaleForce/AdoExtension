@@ -1,4 +1,3 @@
-import { SummaryForIteration } from "./ado/summary";
 import { GetItemsFromIteration, GetIterations } from "./ado/api";
 import { loadConfig } from "./models/adoConfig";
 

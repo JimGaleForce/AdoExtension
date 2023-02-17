@@ -5,7 +5,8 @@ export const ReassignedParser: IterationItemParser = async (config, workItem, wo
     let reassignedTag: ReassignedTag = {
         reassigned: {
             toMe: false,
-            fromMe: false
+            fromMe: false,
+            timeline: []
         }
     }
 
