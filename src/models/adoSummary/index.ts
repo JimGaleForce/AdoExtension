@@ -1,4 +1,4 @@
-import { Iteration, WorkItem } from "../adoApi"
+import { Iteration, WorkItem, WorkItemHistory } from "../adoApi"
 import { BaseTag, WorkItemTags } from "../ItemTag"
 
 export type ItemSummary<T extends BaseTag> = { 
@@ -19,4 +19,4 @@ export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promis
     }) 
 }
 
-export type ItemParser<T extends BaseTag> = (item: WorkItem, tags: Partial<T>) => Promise<Partial<T>>;
+export type ItemParser<T extends BaseTag> = (workItem: WorkItem, workItemHistory: WorkItemHistory, tags: Partial<T>,) => Promise<Partial<T>>;
