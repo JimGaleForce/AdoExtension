@@ -5,10 +5,12 @@ import { IterationItemParser } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { ReassignedParser } from "./parser";
+import { CompletedParser } from "./parser/CompletedParser";
 
 
 const IterationSummaryParser: IterationItemParser[] = [
-    ReassignedParser
+    ReassignedParser,
+    CompletedParser
 ]
 
 // Generates a proper ADO Summary for a given iteration

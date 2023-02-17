@@ -21,11 +21,21 @@ export const ReassignedParser: IterationItemParser = async (config, workItem, wo
         if (assignedToMe && newAssignedTo !== config.email) {
             assignedToMe = false;
             reassignedTag.reassigned.fromMe = true;
+            reassignedTag.reassigned.timeline.push({
+                date: historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.revisedDate,
+                fromMe: true,
+                toMe: false
+            });
         }
 
         if (!assignedToMe && newAssignedTo === config.email) {
             assignedToMe = true;
             reassignedTag.reassigned.toMe = true;
+            reassignedTag.reassigned.timeline.push({
+                date: historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.revisedDate,
+                fromMe: false,
+                toMe: true
+            });
         }
     }
 
