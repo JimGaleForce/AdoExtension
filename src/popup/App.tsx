@@ -1,4 +1,4 @@
-import Highlight from './highlight';
+import Config from './config';
 
 const App = (): JSX.Element => {
   return (
@@ -7,7 +7,7 @@ const App = (): JSX.Element => {
         <h3 className="pl-2 pt-2 text-lg font-medium leading-6 text-white">ADO Powertools</h3>
       </div>
       <div className='p-2 bg-slate-100 min-h-full'>
-        <Highlight/>
+        <Config/>
       </div>
     </div>
   )

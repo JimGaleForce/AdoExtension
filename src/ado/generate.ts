@@ -1,23 +1,12 @@
-// (async () => {
-//   const src = chrome.runtime.getURL("ado/summary/*");
-//   const contentMain = await import(src);
-//   contentMain.main();
-// })();
-
-import { SummaryForIteration } from "./summary";
-
-
 async function addGenerateButton() {
   //TODO: check that we're on an iteration view first
   let topBar = document.getElementsByClassName("vss-HubTileRegion")[0];
-
 
   let generateButton = document.createElement("button");
   generateButton.textContent = "Generate summary";
   // copy styling from ADO button
   generateButton.className = "vss-PivotBar--button bolt-button enabled bolt-focus-treatment";
   generateButton.onclick = createSummaryAndOpen;
-
 
   topBar.prepend(generateButton);
 
@@ -45,3 +34,5 @@ chrome.runtime.onMessage.addListener(
     console.log(request);
   }
 );
+
+export {}

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AdoConfigData, baseConfig, loadConfig, saveConfig } from '../models/adoConfig';
 
 
-const Highlight = (): JSX.Element => {
+const Config = (): JSX.Element => {
     const [adoxData, setAdoxData] = useState<AdoConfigData>(baseConfig);
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(null);
@@ -235,4 +235,4 @@ const Highlight = (): JSX.Element => {
     );
 }
 
-export default Highlight
+export default Config

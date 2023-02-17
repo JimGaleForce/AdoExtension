@@ -31,14 +31,6 @@
       "run_at": "document_idle"
     }
   ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "src/ado/**/*.*"
-      ],
-      "matches": ["<all_urls>"]
-    }
-  ],
   "icons": {
     "32": "src/assets/icons/32.png",
     "64": "src/assets/icons/64.png",
