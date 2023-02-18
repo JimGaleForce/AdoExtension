@@ -5,9 +5,7 @@ import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } fro
 import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
-import { IterationTrackerParser, ReassignedParser } from "./parser";
-import { CompletedParser } from "./parser/CompletedParser";
-
+import { CompletedParser, IterationTrackerParser, ReassignedParser } from "./parser";
 
 const IterationSummaryParser: IterationItemParser[] = [
     ReassignedParser,
