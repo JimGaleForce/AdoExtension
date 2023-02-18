@@ -19,13 +19,6 @@ script.addEventListener("error", (err) => {
 console.log("starting script");
 document.head.append(script);
 
-function updateGenerateButtonText(text: string) {
-    const button = document.getElementById("generate-summary-button")
-    if (button) {
-        button.textContent = text;
-    }
-}
-
 function formatWorkItem(itemId: string, title: string) {
     let url = `(https://microsoft.visualstudio.com/Edge/_workitems/edit/${itemId})`;
     return `<li><a href="${url}">${itemId}</a>: ${title} </li>`
@@ -33,8 +26,6 @@ function formatWorkItem(itemId: string, title: string) {
 
 chrome.runtime.onMessage.addListener(
     async function (request, sender, sendResponse) {
-
-        updateGenerateButtonText("Generate summary");
         console.log("Got response");
         console.log(request);
         const summary = request.summary as IterationSummary;
@@ -94,7 +85,6 @@ document.addEventListener('getSummaryForIteration', function (e: any) {
     const iteration = e.detail;
 
     if (iteration) {
-        updateGenerateButtonText("Generating...");
         chrome.runtime.sendMessage({
             action: 'iterationSummary',
             iteration: iteration

@@ -18,7 +18,7 @@
     "default_popup": "index.html"
   },
   "web_accessible_resources": [{
-    "resources": ["src/inject.js"],
+    "resources": ["src/pages/summary/index.html"],
     "matches": ["*://*.visualstudio.com/*"]
   }],
   "content_scripts": [

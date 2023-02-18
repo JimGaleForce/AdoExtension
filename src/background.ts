@@ -54,12 +54,23 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (action === "iterationSummary") {
-    let summary = await SummaryForIteration(iteration.id)
-    if (sender.tab?.id) {
-      await chrome.tabs.sendMessage(sender.tab.id, {
-        summary: summary
-      }); 
-    }
+    const summaryTab = await chrome.tabs.create({
+      active: true,
+      url: 'src/pages/summary/index.html'
+    });
+
+    if (!summaryTab.id) { return; }
+
+    await chrome.tabs.sendMessage(summaryTab.id, {
+      generating: true,
+      iteration: iteration
+    })
+
+    // let summary = await SummaryForIteration(iteration.id)
+
+    await chrome.tabs.sendMessage(summaryTab.id, {
+      summary: "test"
+    })
   }
 });
 
