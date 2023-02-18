@@ -1,35 +1,14 @@
 import { ItemSummary, IterationSummary } from "../models/adoSummary";
-import { BugTag, CompletedTag, IterationTrackerTag, WorkItemTags } from "../models/ItemTag";
+import { CompletedTag, IterationTrackerTag, WorkItemTags } from "../models/ItemTag";
 import { ReassignedTag } from "../models/ItemTag/ReassignedTag";
 
-let generateButton: HTMLButtonElement;
+async function createSummary(iterationId: string) {
 
-async function addGenerateButton() {
-  generateButton = document.createElement("button");
-  generateButton.textContent = "Generate summary";
-  // copy styling from ADO button
-  generateButton.className = "vss-PivotBar--button bolt-button enabled bolt-focus-treatment";
-  generateButton.onclick = createSummary;
-
-  //TODO: check that we're on an iteration view first
-  let topBar = document.getElementsByClassName("vss-HubTileRegion")[0];
-  if (topBar) {
-    topBar.prepend(generateButton);
-  }
-}
-
-function waitFirst() {
-  window.setTimeout(addGenerateButton, 1000);
-}
-
-
-async function createSummary() {
-  console.log(`Creating summary for f35df25f-e9d5-46da-9c92-e100da93cf3f...`);
-  let resp = await chrome.runtime.sendMessage({
+  console.log(`Creating summary for ${iterationId}...`);
+  chrome.runtime.sendMessage({
     action: 'iterationSummary',
     iterationId: 'f35df25f-e9d5-46da-9c92-e100da93cf3f'
   });
-  generateButton.textContent = "Creating..."
 }
 
 function formatWorkItem(itemId: string, title: string) {
@@ -41,7 +20,6 @@ chrome.runtime.onMessage.addListener(
   async function(request, sender, sendResponse) {
     console.log("Got response");
     console.log(request);
-    generateButton.textContent = "Generate summary"; // reset button text
 
     let table = '<h3>Sprint summary</h3>';
 
@@ -89,6 +67,18 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-waitFirst();
+var s = document.createElement('script');
+s.src = chrome.runtime.getURL('src/inject.js');
+console.log(s.src);
+s.onload = function() {
+    s.remove();
+};
+(document.head || document.documentElement).appendChild(s);
+
+document.addEventListener('getSummaryForIteration', function(e: any) {
+  createSummary(e.detail)
+});
+
+
 
 export {}

@@ -17,6 +17,10 @@
     "default_title": "ADO Power Tools",
     "default_popup": "index.html"
   },
+  "web_accessible_resources": [{
+    "resources": ["src/inject.js"],
+    "matches": ["*://*.visualstudio.com/*"]
+  }],
   "content_scripts": [
     {
       "js": [
@@ -25,7 +29,7 @@
         "src/ado/proposed.js"
       ],
       "matches": [
-        "https://microsoft.visualstudio.com/*",
+        "*://*.visualstudio.com/*",
         "https://dev.azure.com/*"
       ],
       "run_at": "document_idle"
