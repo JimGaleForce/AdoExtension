@@ -12,7 +12,6 @@ export const IterationTrackerParser: IterationItemParser = async (config, workIt
     for (const historyEvent of workItemHistoryEvents) {
         if (historyEvent.fields?.["System.IterationPath"]?.newValue &&
             historyEvent.fields?.["System.IterationPath"].newValue !== extra.iteration.path) {
-            console.log(`Marking this item as moved out: ${historyEvent.fields?.["System.IterationPath"]?.newValue} !== ${extra.iteration.path}`)
             iterationTrackerTag.moved.outOfIteration = true
         }
         if (historyEvent.fields?.["System.IterationPath"]?.newValue &&
