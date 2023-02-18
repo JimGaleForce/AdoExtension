@@ -20,4 +20,4 @@ export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promis
     }) 
 }
 
-export type ItemParser<T extends BaseTag> = (config: AdoConfigData, workItem: WorkItem, workItemHistoryEvents: WorkItemHistoryEvent[], tags: Partial<T>,) => Promise<Partial<T>>;
+export type ItemParser<T extends BaseTag, U extends {}> = (config: AdoConfigData, workItem: WorkItem, workItemHistoryEvents: WorkItemHistoryEvent[], tags: Partial<T>, extra: U) => Promise<Partial<T>>;

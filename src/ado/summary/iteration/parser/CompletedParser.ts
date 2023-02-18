@@ -1,7 +1,7 @@
 import { IterationItemParser } from "../../../../models/adoSummary/iteration";
 import { CompletedTag } from "../../../../models/ItemTag/CompletedTag";
 
-export const CompletedParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags) => {
+export const CompletedParser: IterationItemParser = async (config, _workItem, workItemHistoryEvents, tags, _extra) => {
     let completedTag: CompletedTag = {
         completedByMe: false
     }

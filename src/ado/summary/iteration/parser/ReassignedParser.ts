@@ -1,7 +1,7 @@
 import { IterationItemParser } from "../../../../models/adoSummary/iteration";
 import { ReassignedTag } from "../../../../models/ItemTag/ReassignedTag";
 
-export const ReassignedParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags) => {
+export const ReassignedParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags, extra) => {
     let reassignedTag: ReassignedTag = {
         reassigned: {
             toMe: false,

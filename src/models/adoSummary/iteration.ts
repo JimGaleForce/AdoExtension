@@ -7,6 +7,10 @@ export type IterationSummary = {
     workItemSummaries: ItemSummary<WorkItemTags>[]
 }
 
+export type IterationParserExtraData = {
+    iteration: Iteration
+}
+
 export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promise<number[]> = (iterationId: string) => {
     return new Promise<number[]>(async (resolve) => {
         const data = await chrome.storage.sync.get([iterationId]);
@@ -14,4 +18,4 @@ export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promis
     }) 
 }
 
-export type IterationItemParser = ItemParser<WorkItemTags>
+export type IterationItemParser = ItemParser<WorkItemTags, IterationParserExtraData>

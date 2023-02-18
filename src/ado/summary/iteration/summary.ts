@@ -1,16 +1,18 @@
 import dayjs from "dayjs";
+import { Iteration } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../../models/adoSummary";
-import { IterationItemParser } from "../../../models/adoSummary/iteration";
+import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
-import { ReassignedParser } from "./parser";
+import { IterationTrackerParser, ReassignedParser } from "./parser";
 import { CompletedParser } from "./parser/CompletedParser";
 
 
 const IterationSummaryParser: IterationItemParser[] = [
     ReassignedParser,
-    CompletedParser
+    CompletedParser,
+    IterationTrackerParser
 ]
 
 // Generates a proper ADO Summary for a given iteration
@@ -42,7 +44,7 @@ export async function SummaryForIteration(iterationId: string) {
     // in parallel. This was not initially done due to concerns of hitting
     // API limits.
     for (const workItemId of workItemIds) {
-        const itemSummary = await parseWorkItem(config, workItemId, startDate, finishDate);
+        const itemSummary = await parseWorkItem(config, iteration, workItemId, startDate, finishDate);
         if (itemSummary !== null) {
             summary.workItems.push(itemSummary);
         }
@@ -53,7 +55,7 @@ export async function SummaryForIteration(iterationId: string) {
     return summary;
 }
 
-async function parseWorkItem(config: AdoConfigData, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
+async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
     const workItemHistory = await GetWorkItemHistory(config, workItemId);
@@ -70,6 +72,9 @@ async function parseWorkItem(config: AdoConfigData, workItemId: number, startDat
     const workItemCreatedAt = dayjs(workItemHistory.value[0].revisedDate)
     const queryDate = workItemCreatedAt.isAfter(startDate) ? workItemHistory.value[0].revisedDate : startDateStr;
     const workItem = await GetWorkItem(config, workItemId, queryDate)
+    const extraData: IterationParserExtraData = {
+        iteration: iteration
+    }
 
     let tags: Partial<WorkItemTags> = {}
     // Ignore any events that occured outside of our desired timeframe
@@ -92,7 +97,7 @@ async function parseWorkItem(config: AdoConfigData, workItemId: number, startDat
     // Parse the work item using all parsers defined in the IterationSummaryParser.
     // The parser will update the `workItemSummary.tags` object directly
     for (const parser of IterationSummaryParser) {
-        tags = await parser(config, workItem, relevantHistoryEvents, tags);
+        tags = await parser(config, workItem, relevantHistoryEvents, tags, extraData);
     }
 
     return {
