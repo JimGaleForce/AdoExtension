@@ -18,20 +18,26 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
+const loadIteration = async (iterationId: string) => {
+  const config = await loadConfig();
+  const itemsJson = await GetItemsFromIteration(config, iterationId);
+  const currentItemIds = itemsJson.workItemRelations.map((item: any) => item.target.id);
+
+  const data = await chrome.storage.sync.get([iterationId]);
+  const pastItemIds = data[iterationId] ?? [];
+
+  // Remove duplicate item ids and then store.
+  chrome.storage.sync.set({[iterationId]:[...new Set(currentItemIds.concat(pastItemIds))]});
+}
+
+
 const loadLatestIteration = async () => {
   const config = await loadConfig();
 
   const iterationsJson = await GetIterations(config, true);
   const currentIterationId = iterationsJson.value[0].id;
 
-  const itemsJson = await GetItemsFromIteration(config, currentIterationId);
-  const currentItemIds = itemsJson.workItemRelations.map((item: any) => item.target.id);
-
-  const data = await chrome.storage.sync.get([currentIterationId]);
-  const pastItemIds = data[currentIterationId] ?? [];
-
-  // Remove duplicate item ids and then store.
-  chrome.storage.sync.set({[currentIterationId]:[...new Set(currentItemIds.concat(pastItemIds))]});
+  loadIteration(currentIterationId);
 }
 
 chrome.alarms.create(
@@ -56,21 +62,15 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (action === "iterationSummary") {
     const summaryTab = await chrome.tabs.create({
       active: true,
-      url: 'src/pages/summary/index.html'
+      url: `src/pages/summary/index.html?iteration=${iteration.id}`
     });
 
-    if (!summaryTab.id) { return; }
+    await loadIteration(iteration.id);
 
-    await chrome.tabs.sendMessage(summaryTab.id, {
-      generating: true,
-      iteration: iteration
-    })
-
-    // let summary = await SummaryForIteration(iteration.id)
-
-    await chrome.tabs.sendMessage(summaryTab.id, {
-      summary: "test"
-    })
+    let summary = await SummaryForIteration(iteration.id)
+    if (summaryTab.id) {
+      chrome.tabs.sendMessage(summaryTab.id, { summary })
+    }
   }
 });
 

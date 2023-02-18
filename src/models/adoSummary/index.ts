@@ -5,7 +5,7 @@ import { BaseTag, WorkItemTags } from "../ItemTag"
 export type ItemSummary<T extends BaseTag> = { 
     id: number
     title: string
-    tags: Partial<T>
+    tags: T
 }
 
 export interface IterationSummary {
