@@ -45,10 +45,17 @@ chrome.runtime.onMessage.addListener(
 
     let table = '<h3>Sprint summary</h3>';
 
-    let completed = "<p>Scheduled and completed:</p>\n";
-    let addedMovedIn = "<p>Added and/or moved in:</p>\n";
-    let movedOut = "<p>Moved out:</p>\n";
-    let movedOff = "<p>Moved to someone else:</p>\n";
+    let completed =       `<p>Scheduled and completed:</p>
+                              <ul>`;
+    let addedMovedIn =    `   </ul>
+                           <p>Added and/or moved in:</p>
+                              <ul>`;
+    let movedOut =        `   </ul>
+                           <p>Moved out:</p>
+                              <ul>`;
+    let movedOff =        `   </ul>
+                           <p>Added and/or moved in:</p>
+                              <ul>`;
 
     const summary: IterationSummary = request.summary;
     let item: ItemSummary<WorkItemTags & CompletedTag & IterationTrackerTag & ReassignedTag>;
