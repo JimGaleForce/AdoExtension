@@ -73,11 +73,7 @@ chrome.runtime.onMessage.addListener(
     table.concat(movedOff);
 
 
-<<<<<<< HEAD
     const url = window.URL.createObjectURL(new Blob([table], {type: 'text/html'}));
-=======
-    const url = window.URL.createObjectURL(new Blob([table, completed, addedMovedIn], {type: 'text/html'}));
->>>>>>> b40c860bc6383b60e3b1e35fe2031eedc72666c1
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.target = '_blank';
