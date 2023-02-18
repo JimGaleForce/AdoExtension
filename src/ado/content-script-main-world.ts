@@ -39,7 +39,6 @@ function waitFirst() {
   window.setTimeout(addGenerateButton, 1000);
 }
 
-
 waitFirst();
 
 export { }
