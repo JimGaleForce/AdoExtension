@@ -34,35 +34,35 @@ async function createSummary() {
 
 function formatWorkItem(itemId: string, title: string) {
   let url = `(https://microsoft.visualstudio.com/Edge/_workitems/edit/${itemId})`;
-  return `- [${itemId}](${url}): ${title}\n`;
+  return `<li><a href="${url}">${itemId}</a>: ${title} </li>`
 }
 
 chrome.runtime.onMessage.addListener(
   async function(request, sender, sendResponse) {
     console.log("Got response");
     console.log(request);
-    generateButton.textContent = "Generate summary";
+    generateButton.textContent = "Generate summary"; // reset button text
 
-    let table = '## Sprint summary';
+    let table = '<h3>Sprint summary</h3>';
 
-    let completed = "### Scheduled and completed\n";
-    let addedMovedIn = "### Added and/or moved in\n";
-    let movedOut = "### Moved out\n";
-    let movedOff = "### Moved to someone else\n";
+    let completed = "<p>Scheduled and completed:</p>\n";
+    let addedMovedIn = "<p>Added and/or moved in:</p>\n";
+    let movedOut = "<p>Moved out:</p>\n";
+    let movedOff = "<p>Moved to someone else:</p>\n";
 
     const summary: IterationSummary = request.summary;
     let item: ItemSummary<WorkItemTags & CompletedTag & IterationTrackerTag & ReassignedTag>;
     for (item of summary.workItems) {
-      let mdString = formatWorkItem(item.id.toString(), item.title);
+      let formattedString = formatWorkItem(item.id.toString(), item.title);
 
       if (item.tags.completedByMe) {
-        completed.concat(mdString);
+        completed.concat(formattedString);
       } else if (item.tags.reassigned?.toMe || item.tags.moved?.intoIteration) {
-        addedMovedIn.concat(mdString);
+        addedMovedIn.concat(formattedString);
       } else if (item.tags.reassigned?.fromMe) {
-        movedOff.concat(mdString);
+        movedOff.concat(formattedString);
       } else if (item.tags.moved?.outOfIteration) {
-        movedOut.concat(mdString);
+        movedOut.concat(formattedString);
       }
     }
 
@@ -73,7 +73,7 @@ chrome.runtime.onMessage.addListener(
     table.concat(movedOff);
 
 
-    const url = window.URL.createObjectURL(new Blob([table], {type: 'text/markdown'}));
+    const url = window.URL.createObjectURL(new Blob([table, completed, addedMovedIn], {type: 'text/html'}));
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.target = '_blank';
