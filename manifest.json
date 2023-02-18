@@ -25,7 +25,7 @@
     {
       "js": [
         "src/ado/content.js",
-        "src/ado/generate.ts",
+        "src/ado/content-script.ts",
         "src/ado/proposed.js"
       ],
       "matches": [

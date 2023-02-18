@@ -47,9 +47,14 @@ chrome.alarms.onAlarm.addListener(
 )
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if (message.action === "iterationSummary") { 
-    let summary = await SummaryForIteration(message.iterationId)
-    sendResponse(summary);
+  const {action, iteration} = message;
+
+  if (!action || !iteration) {
+    return;
+  }
+
+  if (action === "iterationSummary") {
+    let summary = await SummaryForIteration(iteration.id)
     if (sender.tab?.id) {
       await chrome.tabs.sendMessage(sender.tab.id, {
         summary: summary
