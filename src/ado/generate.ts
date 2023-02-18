@@ -19,7 +19,7 @@ async function addGenerateButton() {
 }
 
 function waitFirst() {
-  window.setTimeout(addGenerateButton, 1000);
+  window.setTimeout(addGenerateButton, 100);
 }
 
 
@@ -43,9 +43,11 @@ chrome.runtime.onMessage.addListener(
     console.log(request);
     generateButton.textContent = "Generate summary"; // reset button text
 
-    let table = '<h3>Sprint summary</h3>';
+    const iterationString = document.getElementsByClassName("ms-CommandBarItem-commandText itemCommandText_278ff396")[0].textContent;
 
-    let completed =       `<p>Scheduled and completed:</p>
+    let table = `<h3>Sprint summary for ${iterationString}</h3>`;
+
+    let completed =       `<p>Completed:</p>
                               <ul>`;
     let addedMovedIn =    `   </ul>
                            <p>Added and/or moved in:</p>
@@ -54,7 +56,7 @@ chrome.runtime.onMessage.addListener(
                            <p>Moved out:</p>
                               <ul>`;
     let movedOff =        `   </ul>
-                           <p>Added and/or moved in:</p>
+                           <p>Moved off:</p>
                               <ul>`;
 
     const summary: IterationSummary = request.summary;
@@ -63,21 +65,25 @@ chrome.runtime.onMessage.addListener(
       let formattedString = formatWorkItem(item.id.toString(), item.title);
 
       if (item.tags.completedByMe) {
-        completed.concat(formattedString);
-      } else if (item.tags.reassigned?.toMe || item.tags.moved?.intoIteration) {
-        addedMovedIn.concat(formattedString);
-      } else if (item.tags.reassigned?.fromMe) {
-        movedOff.concat(formattedString);
-      } else if (item.tags.moved?.outOfIteration) {
-        movedOut.concat(formattedString);
+        completed = completed.concat(formattedString);
+      }
+      if (item.tags.reassigned?.toMe || item.tags.moved?.intoIteration) {
+        addedMovedIn = addedMovedIn.concat(formattedString);
+      }
+      if (item.tags.reassigned?.fromMe) {
+        movedOff = movedOff.concat(formattedString);
+      }
+      if (item.tags.moved?.outOfIteration) {
+        movedOut = movedOut.concat(formattedString);
       }
     }
 
 
-    table.concat(completed);
-    table.concat(addedMovedIn);
-    table.concat(movedOut);
-    table.concat(movedOff);
+    table = table.concat(completed)
+                 .concat(addedMovedIn)
+                 .concat(movedOut)
+                 .concat(movedOff)
+                 .concat("</ul>"); // closing tag
 
 
     const url = window.URL.createObjectURL(new Blob([table], {type: 'text/html'}));
