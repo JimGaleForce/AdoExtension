@@ -54,7 +54,7 @@ export type IterationWorkItems = {
     }
 }
 
-export type WorkItemState = "Committed" | "Completed" | "Cut" | "Proposed" | "Started"
+export type WorkItemState = "Committed" | "Completed" | "Cut" | "Proposed" | "Started" | "Resolved" | "Closed"
 
 export type AdoUser = {
     displayName: string

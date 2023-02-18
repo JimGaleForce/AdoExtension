@@ -8,14 +8,18 @@ export const CompletedParser: IterationItemParser = async (config, _workItem, wo
 
     for (const historyEvent of workItemHistoryEvents) {
         if (
-            historyEvent.revisedBy.uniqueName === config.email &&
-            historyEvent.fields?.["System.State"]?.newValue === "Completed"
+            historyEvent.revisedBy.uniqueName === config.email && (
+                historyEvent.fields?.["System.State"]?.newValue === 'Completed' ||
+                historyEvent.fields?.["System.State"]?.newValue === 'Resolved'
+            )
             ) {
                 completedTag.completedByMe = true
             }
         if (
-            historyEvent.revisedBy.uniqueName === config.email &&
-            historyEvent.fields?.["System.State"]?.newValue !== "Completed"
+            historyEvent.revisedBy.uniqueName === config.email && !(
+                historyEvent.fields?.["System.State"]?.newValue === 'Completed' ||
+                historyEvent.fields?.["System.State"]?.newValue === 'Resolved'
+            )
             ) {
                 completedTag.completedByMe = false
             }
