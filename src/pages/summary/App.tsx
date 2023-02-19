@@ -3,15 +3,16 @@ import { BellIcon } from "@heroicons/react/24/outline";
 import MDEditor from "@uiw/react-md-editor";
 import logoPath from "../../assets/icons/128.png";
 import { IterationSummary } from "../../models/adoSummary";
+import { markdownTable } from 'markdown-table'
 
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
 }
 
-function formatWorkItem(itemId: string, title: string) {
-  let url = `(https://microsoft.visualstudio.com/Edge/_workitems/edit/${itemId})`;
-  return `[${title}](${url})`
+function formatWorkItem(itemId: string) {
+  let url = `[${itemId}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${itemId})`;
+  return `[${itemId}](${url})`
 }
 
 const App = (): JSX.Element => {
@@ -28,39 +29,53 @@ const App = (): JSX.Element => {
     console.log(request);
     const summary = request.summary as IterationSummary;
     let summaryText = `# Sprint summary for ${summary.iteration.name}`
-    let completedText = '## Completed:'
-    let movedInText = `## Added and/or moved in:`
-    let movedOffText = `## Moved off:`
-    let movedOutText = `## Moved out:`
 
+    let table: string[][] = [
+      ['ID', 'Title', 'Completed', 'Reassigned To', 'Reassigned From', 'Moved In', 'Moved Off']
+    ]
     for (let item of summary.workItems) {
-      let formattedString = formatWorkItem(item.id.toString(), item.title);
+      let row: string[] = []
+
+      // Work ID | Title | Type | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
+      row.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
+      row.push(item.title.substring(0, 70))
+      // row.push("(type)")
+
 
       if (item.tags.completedByMe) {
-        completedText = completedText.concat(`\n- ${formattedString}`);
+        row.push("X")
+      } else {
+        row.push(" ")
       }
-      if (item.tags.reassigned?.toMe || item.tags.moved?.intoIteration) {
-        movedInText = movedInText.concat(`\n- ${formattedString}`);
+
+      if (item.tags.reassigned?.toMe) {
+        row.push("X")
+      } else {
+        row.push(" ")
       }
+
       if (item.tags.reassigned?.fromMe) {
-        movedOffText = movedOffText.concat(`\n- ${formattedString}`);
+        row.push("X")
+      } else {
+        row.push(" ")
       }
+
+      if (item.tags.moved?.intoIteration) {
+        row.push("X")
+      } else {
+        row.push(" ")
+      }
+
       if (item.tags.moved?.outOfIteration) {
-        movedOutText = movedOutText.concat(`\n- ${formattedString}`);
+        row.push("X")
+      } else {
+        row.push(" ")
       }
+
+      table.push(row);
     }
 
-    summaryText = summaryText
-      .concat('\n\n')
-      .concat(completedText)
-      .concat('\n\n')
-      .concat(movedInText)
-      .concat('\n\n')
-      .concat(movedOffText)
-      .concat('\n\n')
-      .concat(movedOutText);
-
-    setValue(summaryText);
+    setValue(`${summaryText}\n\n${markdownTable(table)}`);
   };
 
   useEffect(() => {
@@ -116,9 +131,10 @@ const App = (): JSX.Element => {
           <div className="mx-auto px-4 pb-12">
             <div className="mx-auto max-w-7xl" data-color-mode="light">
               <MDEditor
-                height={500}
+                height={750}
                 value={value}
                 onChange={(val) => val && setValue(val)}
+                preview='preview'
               />
             </div>
           </div>

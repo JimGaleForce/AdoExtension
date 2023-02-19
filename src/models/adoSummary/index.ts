@@ -2,9 +2,12 @@ import { Iteration, WorkItem, WorkItemHistoryEvent } from "../adoApi"
 import { AdoConfigData } from "../adoConfig"
 import { BaseTag, WorkItemTags } from "../ItemTag"
 
+// export type ItemType = 'Task' | 'Bug' | 'Deliverable' | 'Scenario'
+
 export type ItemSummary<T extends BaseTag> = { 
     id: number
     title: string
+    // type: ItemType | string
     tags: Partial<T>
 }
 
