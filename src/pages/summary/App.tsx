@@ -5,16 +5,6 @@ import logoPath from "../../assets/icons/128.png";
 import { IterationSummary } from "../../models/adoSummary";
 import { markdownTable } from 'markdown-table'
 
-
-function classNames(...classes: any) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function formatWorkItem(itemId: string) {
-  let url = `[${itemId}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${itemId})`;
-  return `[${itemId}](${url})`
-}
-
 const App = (): JSX.Element => {
   const [value, setValue] = useState("**Generating Summary...**");
   const onMessage = async (
@@ -135,6 +125,9 @@ const App = (): JSX.Element => {
                 value={value}
                 onChange={(val) => val && setValue(val)}
                 preview='preview'
+                previewOptions={{
+                    linkTarget: '_blank'
+                }}
               />
             </div>
           </div>

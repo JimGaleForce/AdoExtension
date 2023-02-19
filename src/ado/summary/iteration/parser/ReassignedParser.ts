@@ -1,3 +1,4 @@
+import { WorkItemState } from "../../../../models/adoApi";
 import { IterationItemParser } from "../../../../models/adoSummary/iteration";
 import { ReassignedTag } from "../../../../models/ItemTag/ReassignedTag";
 
@@ -10,11 +11,17 @@ export const ReassignedParser: IterationItemParser = async (config, workItem, wo
         }
     }
 
+    const isCompletedState: WorkItemState[] = ['Closed', 'Cut', 'Resolved'] 
     let assignedToMe = workItem.fields["System.AssignedTo"].uniqueName === config.email;
 
+    let isCompleted = false
     for (const historyEvent of workItemHistoryEvents) {
+        if (historyEvent.fields?.["System.State"]?.newValue) {
+            isCompleted = isCompletedState.indexOf(historyEvent.fields?.["System.State"]?.newValue) !== -1;
+        }
+
         const newAssignedTo = historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName;
-        if (!newAssignedTo) {
+        if (isCompleted || !newAssignedTo) {
             continue;
         }
 

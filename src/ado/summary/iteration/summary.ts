@@ -6,8 +6,10 @@ import { IterationItemParser, IterationParserExtraData } from "../../../models/a
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, IterationTrackerParser, ReassignedParser } from "./parser";
+import { TitleParser } from "./parser/TitleParser";
 
 const IterationSummaryParser: IterationItemParser[] = [
+    TitleParser,
     ReassignedParser,
     CompletedParser,
     IterationTrackerParser

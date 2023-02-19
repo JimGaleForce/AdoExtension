@@ -10,7 +10,9 @@ export const IterationTrackerParser: IterationItemParser = async (config, workIt
     }
 
     for (const historyEvent of workItemHistoryEvents) {
-        if (historyEvent.fields?.["System.IterationPath"]?.newValue &&
+        if (historyEvent.fields?.["System.IterationPath"]?.oldValue &&
+            historyEvent.fields?.["System.IterationPath"]?.oldValue === extra.iteration.path &&
+            historyEvent.fields?.["System.IterationPath"]?.newValue &&
             historyEvent.fields?.["System.IterationPath"].newValue !== extra.iteration.path) {
             iterationTrackerTag.moved.outOfIteration = true
         }
@@ -22,6 +24,6 @@ export const IterationTrackerParser: IterationItemParser = async (config, workIt
 
     return {
         ...tags,
-        ...iterationTrackerTag
+        ...iterationTrackerTag,
     };
 }
