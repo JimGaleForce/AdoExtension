@@ -32,10 +32,10 @@ const App = (): JSX.Element => {
     console.log(request);
     const summary = request.summary as IterationSummary;
     let summaryText = `# Sprint summary for ${summary.iteration.name}`
-    let completedText = summaryText.concat(`## Completed:`)
-    let movedInText = summaryText.concat(`## Added and/or moved in:`)
-    let movedOffText = summaryText.concat(`## Moved off:`)
-    let movedOutText = summaryText.concat(`## Moved out:`)
+    let completedText = '## Completed:'
+    let movedInText = `## Added and/or moved in:`
+    let movedOffText = `## Moved off:`
+    let movedOutText = `## Moved out:`
 
     for (let item of summary.workItems) {
         let formattedString = formatWorkItem(item.id.toString(), item.title);

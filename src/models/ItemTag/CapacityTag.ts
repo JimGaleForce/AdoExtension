@@ -6,5 +6,5 @@ export type Capacity = {
 }
 
 export type CapacityTag = BaseTag & {
-    capacity?: Capacity
+    capacity: Capacity
 }

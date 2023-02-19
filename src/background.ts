@@ -55,11 +55,16 @@ chrome.alarms.onAlarm.addListener(
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   const {action, iteration} = message;
 
+  console.log("[2] here");
   if (!action || !iteration) {
+    console.log("[3] here");
     return;
   }
 
+  console.log("[4] here");
   if (action === "iterationSummary") {
+    
+    console.log("[5] here");
     const summaryTab = await chrome.tabs.create({
       active: true,
       url: `src/pages/summary/index.html?iteration=${iteration.id}`

@@ -22,6 +22,6 @@ document.addEventListener('getSummaryForIteration', function (e: any) {
         chrome.runtime.sendMessage({
             action: 'iterationSummary',
             iteration: iteration
-        });
+        }, (resp) => {});
     }
 });

@@ -2,7 +2,7 @@ import { BaseTag } from "./BaseTag"
 
 export type IterationTrackerTag = BaseTag & {
     moved: {
-        intoIteration?: boolean,
-        outOfIteration?: boolean
+        intoIteration: boolean,
+        outOfIteration: boolean
     }
 }

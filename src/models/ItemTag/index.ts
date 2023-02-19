@@ -11,8 +11,8 @@ export * from './CompletedTag'
 export * from './IterationTrackerTag'
 
 export type WorkItemTags =
-| BugTag
-| CapacityTag
-| CompletedTag
-| IterationTrackerTag
-| ReassignedTag
+& BugTag
+& CapacityTag
+& CompletedTag
+& IterationTrackerTag
+& ReassignedTag

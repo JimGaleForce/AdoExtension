@@ -7,7 +7,7 @@ export type ReassignedTimeline = {
 }
 
 export type ReassignedTag = BaseTag & {
-    reassigned?: {
+    reassigned: {
         toMe: boolean,
         fromMe: boolean
         timeline: ReassignedTimeline[]
