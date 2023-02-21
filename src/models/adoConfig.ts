@@ -32,4 +32,5 @@ export const loadConfig: () => Promise<AdoConfigData> = () => {
 
 export const saveConfig = async (config: AdoConfigData) => {
     await chrome.storage.sync.set({ adoxData: config });
+    await chrome.runtime.sendMessage('adox-colors-updated', async _ => { });
 }
