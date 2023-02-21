@@ -32,11 +32,13 @@ async function addGenerateButton() {
   let topBar = document.getElementsByClassName("vss-HubTileRegion")[0];
   if (topBar) {
     topBar.prepend(generateButton);
+  } else {
+    waitFirst();
   }
 }
 
 function waitFirst() {
-  window.setTimeout(addGenerateButton, 1000);
+  window.setTimeout(addGenerateButton, 100);
 }
 
 waitFirst();
