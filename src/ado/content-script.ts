@@ -25,3 +25,10 @@ document.addEventListener('getSummaryForIteration', function (e: any) {
         }, (resp) => {});
     }
 });
+
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    if (message.error) {
+        console.error(message.error);
+        alert(message.error);
+    }
+});

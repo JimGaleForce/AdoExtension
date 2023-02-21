@@ -1,6 +1,6 @@
 import { GetItemsFromIteration, GetIterations } from "./ado/api";
 import { SummaryForIteration } from "./ado/summary";
-import { loadConfig } from "./models/adoConfig";
+import { loadConfig, isValidConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
 
@@ -60,6 +60,16 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (action === "iterationSummary") {
+
+    const validConfig = await isValidConfig();
+
+    if (validConfig === false) {
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab.id, { error: 'Invalid ADO Power Tools Config' })
+      } 
+      return;
+    }
+
     const summaryTab = await chrome.tabs.create({
       active: true,
       url: `src/pages/summary/index.html?iteration=${iteration.id}`

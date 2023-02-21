@@ -59,7 +59,7 @@ async function highLine() {
   }
 
   // get 'something has changed' event
-  await chrome.runtime.sendMessage('adox-check', async was => adoxChanged = was);
+  await chrome.runtime?.sendMessage('adox-check', async was => adoxChanged = was);
 
   // if changed, change stylesheet to match new colors
   if (adoxChanged) {

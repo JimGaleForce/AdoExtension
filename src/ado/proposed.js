@@ -146,7 +146,6 @@ async function loadInitialData() {
     var data = await chrome.storage.sync.get(['adoxData']);
     queryId = data.adoxData.queryId;
   } catch {
-    failed = true;
   }
 }
 
