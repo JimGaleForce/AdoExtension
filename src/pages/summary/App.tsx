@@ -21,7 +21,7 @@ const App = (): JSX.Element => {
     let summaryText = `# Sprint summary for ${summary.iteration.name}`
 
     let table: string[][] = [
-      ['ID', 'Title', 'Completed', 'Reassigned To', 'Reassigned From', 'Moved In', 'Moved Off']
+      ['ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
     ]
     for (let item of summary.workItems) {
       let row: string[] = []
@@ -33,6 +33,12 @@ const App = (): JSX.Element => {
 
 
       if (item.tags.completedByMe) {
+        row.push("X")
+      } else {
+        row.push(" ")
+      }
+
+      if (item.tags.moved?.intoIteration) {
         row.push("X")
       } else {
         row.push(" ")
@@ -50,11 +56,6 @@ const App = (): JSX.Element => {
         row.push(" ")
       }
 
-      if (item.tags.moved?.intoIteration) {
-        row.push("X")
-      } else {
-        row.push(" ")
-      }
 
       if (item.tags.moved?.outOfIteration) {
         row.push("X")
