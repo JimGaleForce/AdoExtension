@@ -146,7 +146,6 @@ async function loadInitialData() {
     var data = await chrome.storage.sync.get(['adoxData']);
     queryId = data.adoxData.queryId;
   } catch {
-    failed = true;
   }
 }
 
@@ -239,7 +238,7 @@ function getDataCreateTable(list) {
 
   //add to _tfs_counts
   for (var ii = 0; ii < table.length; ii++) {
-    tableitem = null;
+    var tableitem = null;
     for (var jj = 0; jj < _tfs_counts.length; jj++) {
       if (_tfs_counts[jj].name === table[ii].name) {
         tableitem = _tfs_counts[jj];
