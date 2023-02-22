@@ -1,11 +1,16 @@
 # ADO Extension
 
-ADO Extension / ADO Highlighter has 2 power tools:
+ADO Extension / ADO Highlighter has 3 power tools:
 * Highlights lines based on text in the search box in a Backlog/Sprint
 ![Search box](https://raw.githubusercontent.com/JimGaleForce/AdoExtension/main/search.png "Search box")
 ![Colored lines in ADO](https://raw.githubusercontent.com/JimGaleForce/AdoExtension/main/colors.png "Colored lines")
+
 * Shows Proposed items in yellow in the Work details
 ![Proposed in yellow](https://raw.githubusercontent.com/JimGaleForce/AdoExtension/main/proposed.png "Proposed")
+
+* Generate sprint summaries for your team
+![Generate Summary](https://raw.githubusercontent.com/JimGaleForce/AdoExtension/main/generateSummary.png "Generate Summary")
+![Sprint Summary](https://raw.githubusercontent.com/JimGaleForce/AdoExtension/main/sprintSummary.png "Sprint Summary")
 
 ## Installation
 
@@ -27,6 +32,11 @@ For Proposed Work details:
 * Go to and get the GUID Id from the query (in the URL)
 * Go back to your backlog/sprint, click on the extension's icon, add the query id and save
 * Refresh the whole page to see the Proposed-as-yellow colors in the Work details after a few seconds
+
+For Sprint Summaries:
+* Set your organization, project, team, and email in the extension (click the extensions icon)
+* Go to your desired sprint
+* Click "Generate Summary" 
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
