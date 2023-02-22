@@ -33,7 +33,7 @@ export async function SummaryForIteration(iterationId: string) {
     const iteration = await GetIteration(config, iterationId);
     const workItemIds = await GetWorkItemsFromStorageByIteration(iterationId);
 
-    const {startDate, finishDate} = iteration.attributes;
+    const { startDate, finishDate } = iteration.attributes;
 
     let summary: IterationSummary = {
         iteration: iteration,
@@ -89,8 +89,7 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
         workItem.fields["System.AssignedTo"].uniqueName !== config.email &&
         !(relevantHistoryEvents.some(
             historyEvent => historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName === config.email
-            )))
-    {
+        ))) {
         return null;
     }
 
