@@ -4,6 +4,7 @@ import MDEditor from "@uiw/react-md-editor";
 import logoPath from "../../assets/icons/128.png";
 import { IterationSummary } from "../../models/adoSummary";
 import { markdownTable } from 'markdown-table'
+import dayjs from "dayjs";
 
 const App = (): JSX.Element => {
   const [value, setValue] = useState("**Generating Summary...**");
@@ -107,6 +108,8 @@ ${markdownTable(completedTable)}
 
 ## Moved Out:
 ${markdownTable(movedOutTable)}
+
+#### Generated on ${dayjs().format(`MM/DD/YYYY, hh:mma`)}
 `
     );
   };
