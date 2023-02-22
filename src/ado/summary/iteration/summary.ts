@@ -80,10 +80,9 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     let tags: Partial<WorkItemTags> = {}
     // Ignore any events that occured outside of our desired timeframe
     const relevantHistoryEvents = workItemHistory.value.filter(historyEvent => {
-        const revisedDate = dayjs(historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.revisedDate)
+        const revisedDate = dayjs(historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.fields?.["System.ChangedDate"]?.newValue)
         return revisedDate.isAfter(startDate) && revisedDate.isBefore(finishDate)
     });
-
 
     // Ignore this work item if not relevant to us
     if (
