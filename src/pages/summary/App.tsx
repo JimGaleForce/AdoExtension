@@ -101,13 +101,15 @@ const App = (): JSX.Element => {
     setValue(
 `# Sprint summary for ${summary.iteration.name}
 
-${markdownTable(overallTable)}
-
 ## Completed:
 ${markdownTable(completedTable)}
 
 ## Moved Out:
 ${markdownTable(movedOutTable)}
+
+## Detailed Breakdown
+${markdownTable(overallTable)}
+
 
 #### Generated on ${dayjs().format(`MM/DD/YYYY, hh:mma`)}
 `
