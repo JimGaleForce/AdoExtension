@@ -2,6 +2,7 @@ var items = [];
 var epicQueryId = null;
 var epicSort = 'listedorder';
 var urlBase2;
+var adox = null;
 
 async function loadData() {
   if (epicQueryId === null || epicQueryId.length === 0) {
@@ -242,6 +243,11 @@ function schedule() {
   var workItems = items.filter(i => i.links.length === 0);
   var maxDate = new Date('2050-01-01');
   items.map(i => {
+
+    if (i.id === 40465838) {
+      console.log(i.dueDate);
+    }
+
     var minDate = getMinDate(i, null);
     i._dueDate = new Date(minDate === null ? maxDate : minDate);
     //i._order = getTopPri(i);
@@ -431,7 +437,9 @@ var overall2 = 0;
 var tick2 = 0;
 
 async function getIterations() {
-  await httpGetAsync2(getIterationData, urlBase2 + "_apis/work/teamsettings/iterations");
+  const url = urlBase2 + adox.team + "/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1";
+  await httpGetAsync2(getIterationData, url);
+  //https://microsoft.visualstudio.com/Edge/Feedback%20and%20Diagnostics/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1
 }
 
 var iterations = [];
@@ -543,7 +551,7 @@ function rollUpValues(tItem, amount, remainingDays, proposed, bug) {
 
 async function httpGetAsync2(callback, theUrl) {
   var xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = async function () {
+  xmlHttp.onreadystatechange = async () => {
     if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
       await callback(xmlHttp.responseText);
   }
@@ -623,6 +631,7 @@ async function loadInitialTimelineData() {
     console.log('loading in timeline');
     urlBase2 = document.URL.substring(0, document.URL.indexOf('_'));
     var data = await chrome.storage.sync.get(['adoxData']);
+    adox = data.adoxData;
     epicQueryId = data.adoxData.epicQueryId;
     console.log('loaded:' + epicQueryId);
     epicSort = data.adoxData.epicSort ?? 'duedate';
