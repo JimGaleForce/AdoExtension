@@ -17,14 +17,21 @@
     "default_title": "ADO Power Tools",
     "default_popup": "index.html"
   },
-  "web_accessible_resources": [{
-    "resources": ["src/pages/summary/index.html"],
-    "matches": ["*://*.visualstudio.com/*"]
-  }],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/pages/summary/index.html"
+      ],
+      "matches": [
+        "*://*.visualstudio.com/*",
+        "https://dev.azure.com/*"
+      ]
+    }
+  ],
   "content_scripts": [
     {
       "css": [
-        "adostyles.css"
+        "src/adostyles.css"
       ],
       "js": [
         "src/ado/content.js",
@@ -41,7 +48,9 @@
       "js": [
         "src/ado/content-script.ts"
       ],
-      "matches": ["*://*.visualstudio.com/*/_sprints/*"],
+      "matches": [
+        "*://*.visualstudio.com/*/_sprints/*"
+      ],
       "run_at": "document_idle"
     }
   ],

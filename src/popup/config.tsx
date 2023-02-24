@@ -23,7 +23,13 @@ const Config = (): JSX.Element => {
         setAdoxData(newData);
     }
 
-    const onQueryChanged = (queryId: string) => {
+    const onQueryChanged = (scenarioQueryId: string) => {
+        var newData = { ...adoxData };
+        newData.scenarioQueryId = scenarioQueryId;
+        setAdoxData(newData);
+    }
+
+    const onScenarioQueryChanged = (queryId: string) => {
         var newData = { ...adoxData };
         newData.queryId = queryId;
         setAdoxData(newData);
@@ -129,19 +135,45 @@ const Config = (): JSX.Element => {
 
                         <div >
                             <label htmlFor="queryId" className="block text-sm font-medium text-gray-700">
-                                Query ID
+                                Sprint Query ID
                             </label>
                             <div className="mt-1">
                                 <input
                                     type="text"
                                     name="queryId"
                                     id="queryId"
-                                    autoComplete="email"
                                     value={adoxData.queryId}
                                     onChange={(e) => { onQueryChanged(e.target.value) }}
                                     className="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
                                 />
                             </div>
+                        </div>
+
+                        <div >
+                            <label htmlFor="epicQueryId" className="block text-sm font-medium text-gray-700">
+                                Scenario Query ID
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    type="text"
+                                    name="epicSort"
+                                    id="epicQueryId"
+                                    value={adoxData.queryId}
+                                    onChange={(e) => { onScenarioQueryChanged(e.target.value) }}
+                                    className="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="epicSort">Sort by:</label>
+
+                            <select class='queryId' name="epicSort" id="epicSort">
+                                <option value="scenario">Scenario Title</option>
+                                <option value="duedate">Due Date</option>
+                                <option value="orderid">Order Id</option>
+                                <option value="listedorder">Sorted Order</option>
+                            </select>
                         </div>
 
                         <div >
