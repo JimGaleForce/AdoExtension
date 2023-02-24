@@ -120,53 +120,18 @@ function updateBars(nameitem, item) {
               existingMissing.parentNode.removeChild(existingMissing);
             }
 
-            var container = item.querySelector(".visual-progress-container");
             if (tfsitem.missing > 0) {
               existingMissing = document.createElement("div");
               existingMissing.setAttribute('class', 'progress-text-missing');
               existingMissing.textContent = '(' + tfsitem.missing + ' unestimated item' + (tfsitem.missing == 1 ? '' : 's') + ')';
               existingMissing.setAttribute('style', 'display: inline;');
 
+              var container = item.querySelector(".visual-progress-container");
               if (container) {
                 container.parentNode.appendChild(existingMissing);
               }
             }
 
-            if (container) {
-              var completed = item.querySelector('.progress-completed-fullbar');
-              if (completed) {
-                completed.parentNode.removeChild(completed);
-              }
-
-              completed = document.createElement("div");
-              completed.setAttribute('class', 'progress-completed-fullbar');
-              // completed.setAttribute('style', 'width: ' + 100 + "%; background-color: green; height: 18px; opacity: 0.75");
-              container.parentNode.appendChild(completed);
-
-              var fullyCompletedPercent = (tfsitem.fullyCompleted / tfsitem.costOrOriginal) * 100;
-              var partiallyCompletedPercent = (tfsitem.partiallyCompleted / tfsitem.costOrOriginal) * 100;
-
-              var fcpDiv = document.createElement("div");
-              fcpDiv.setAttribute('class', 'progress-completed-full');
-              fcpDiv.setAttribute('style', 'width: ' + fullyCompletedPercent + '%;');
-              completed.appendChild(fcpDiv);
-
-              var pcpDiv = document.createElement("div");
-              pcpDiv.setAttribute('class', 'progress-completed-partial');
-              pcpDiv.setAttribute('style', 'width: ' + partiallyCompletedPercent + '%;');
-              completed.appendChild(pcpDiv);
-
-              var cpText = item.querySelector('.progress-completed-text');
-              if (cpText) {
-                cpText.parentNode.removeChild(cpText);
-              }
-
-              cpText = document.createElement("div");
-              cpText.setAttribute('class', 'progress-completed-text');
-              var amtx = Math.round(100 * (tfsitem.fullyCompleted + tfsitem.partiallyCompleted)) / 100;
-              cpText.textContent = '(' + (amtx) + ' completed of ' + Math.round(100 * tfsitem.costOrOriginal) / 100 + ' costed)';
-              completed.parentNode.appendChild(cpText);
-            }
 
             break;
           }
@@ -181,7 +146,6 @@ async function loadInitialData() {
     var data = await chrome.storage.sync.get(['adoxData']);
     queryId = data.adoxData.queryId;
   } catch {
-    failed = true;
   }
 }
 
@@ -192,11 +156,11 @@ function httpGet(theUrl) {
   return xmlHttp.responseText;
 }
 
-async function httpGetAsync(callback, theUrl) {
+function httpGetAsync(callback, theUrl) {
   var xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = async function () {
+  xmlHttp.onreadystatechange = function () {
     if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
-      await callback(xmlHttp.responseText);
+      callback(xmlHttp.responseText);
   }
   xmlHttp.open("GET", theUrl, true);
   xmlHttp.send(null);
@@ -204,12 +168,12 @@ async function httpGetAsync(callback, theUrl) {
 
 function getData() {
   urlBase = document.URL.substring(0, document.URL.indexOf('_'));
-  var urlFull = urlBase + "_apis/wit/queries/" + queryId;
+  var urlFull = urlBase + "/_apis/wit/queries/" + queryId;
   getQueryId();
 }
 
 function getQueryId() {
-  var url = urlBase + "_apis/wit/wiql/" + queryId + "?api-version=2.2";
+  var url = urlBase + "/_apis/wit/wiql/" + queryId + "?api-version=2.2";
   httpGetAsync(getDataIds, url);
 }
 
@@ -229,17 +193,11 @@ function getDataIds(data) {
 
   ids = ids.substr(0, ids.length - 1);
 
-  httpGetAsync(getDataCreateTable, urlBase + "_apis/wit/workitems?ids=" + ids +
-    "&fields=System.State,System.AssignedTo,OSG.RemainingDays,OSG.Cost," +
-    "System.IterationLevel3,Microsoft.VSTS.Scheduling.OriginalEstimate," +
-    "System.WorkItemType,Microsoft.VSTS.CMMI.TaskType&api-version=6.0");
+  httpGetAsync(getDataCreateTable, urlBase + "/_apis/wit/workitems?ids=" + ids + "&fields=System.State,System.AssignedTo,OSG.RemainingDays,System.IterationLevel3,System.WorkItemType,Microsoft.VSTS.CMMI.TaskType&api-version=6.0");
 }
 
 function createNewTableItem(name) {
-  return {
-    name: name, proposed: 0.0, amount: 0.0, bug: 0.0, missing: 0,
-    partiallyCompleted: 0.0, fullyCompleted: 0.0, costOrOriginal: 0.0
-  };
+  return { name: name, proposed: 0.0, amount: 0.0, bug: 0.0, missing: 0 };
 }
 
 function getDataCreateTable(list) {
@@ -263,12 +221,6 @@ function getDataCreateTable(list) {
     const workitemType = item.fields["System.WorkItemType"];
     const taskType = item.fields["Microsoft.VSTS.CMMI.TaskType"];
     const proposed = state === "Proposed";
-    const cost = item.fields["OSG.Cost"];
-    const originalEstimate = item.fields["Microsoft.VSTS.Scheduling.OriginalEstimate"];
-    const isCostable = workitemType === "Bug" || workitemType === "Task";
-    const costOrOriginal = (!isNaN(cost) && cost > 0) ? cost : (!isNaN(originalEstimate) && originalEstimate > 0) ? originalEstimate : 0;
-    const isCompleted = state === "Completed" || state === "Resolved";
-    const isCompleting = state === "Started" || state === "Active";
     const bug = workitemType === "Bug";
     const isAmountExpected = state === "Proposed" || state === "Active" || state == "Committed" || state == "Started";
     const other = !proposed && !bug && state !== "Cut" && state !== "Closed" && state !== "Resolved";
@@ -277,21 +229,16 @@ function getDataCreateTable(list) {
       amount = 0.0;
     }
 
-    const reportedCost = isCostable ? costOrOriginal : 0;
-
-    const amountPartiallyCompleted = isCostable && isCompleting ? costOrOriginal - amount : 0;
-    const amountFullyCompleted = isCostable && isCompleted ? costOrOriginal : 0;
-
-    addToTable(table, name.displayName, proposed, bug, other, isAmountExpected, amount, amountPartiallyCompleted, amountFullyCompleted, reportedCost);
+    addToTable(table, name.displayName, proposed, bug, other, isAmountExpected, amount);
     if (typeof taskType != 'undefined') {
-      addToTable(table, taskType, proposed, bug, other, isAmountExpected, amount, amountPartiallyCompleted, amountFullyCompleted, reportedCost);
+      addToTable(table, taskType, proposed, bug, other, isAmountExpected, amount);
     }
-    addToTable(table, 'Team', proposed, bug, other, isAmountExpected, amount, amountPartiallyCompleted, amountFullyCompleted, reportedCost);
+    addToTable(table, 'Team', proposed, bug, other, isAmountExpected, amount);
   }
 
   //add to _tfs_counts
   for (var ii = 0; ii < table.length; ii++) {
-    tableitem = null;
+    var tableitem = null;
     for (var jj = 0; jj < _tfs_counts.length; jj++) {
       if (_tfs_counts[jj].name === table[ii].name) {
         tableitem = _tfs_counts[jj];
@@ -308,14 +255,10 @@ function getDataCreateTable(list) {
     tableitem.bug = table[ii].bug;
     tableitem.amount = table[ii].amount;
     tableitem.missing = table[ii].missing;
-    tableitem.partiallyCompleted = table[ii].partiallyCompleted;
-    tableitem.fullyCompleted = table[ii].fullyCompleted;
-    tableitem.costOrOriginal = table[ii].costOrOriginal;
   }
 }
 
-function addToTable(table, name, proposed, bug, other,
-  isAmountExpected, amount, amountPartiallyCompleted, amountFullyCompleted, costOrOriginal) {
+function addToTable(table, name, proposed, bug, other, isAmountExpected, amount) {
   var tableitem = null;
   for (var j = 0; j < table.length; j++) {
     if (table[j].name === name) {
@@ -336,10 +279,6 @@ function addToTable(table, name, proposed, bug, other,
   } else if (other) {
     table[j].amount += amount;
   }
-
-  table[j].partiallyCompleted += amountPartiallyCompleted;
-  table[j].fullyCompleted += amountFullyCompleted;
-  table[j].costOrOriginal += costOrOriginal;
 
   if (isAmountExpected && amount == 0) {
     table[j].missing++;

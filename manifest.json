@@ -1,49 +1,53 @@
 {
   "manifest_version": 3,
-  "name": "ADO Highlighter for Microsoft",
-  "version": "0.5.3",
-  "description": "ADO Highlighter for Microsoft ADO",
+  "name": "ADO Power Tools",
+  "version": "1.0.0",
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background.ts"
   },
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "src/assets/icons/16.png",
+      "32": "src/assets/icons/32.png"
+    },
+    "default_title": "ADO Power Tools",
+    "default_popup": "index.html"
+  },
+  "web_accessible_resources": [{
+    "resources": ["src/pages/summary/index.html"],
+    "matches": ["*://*.visualstudio.com/*"]
+  }],
   "content_scripts": [
     {
       "css": [
         "adostyles.css"
       ],
       "js": [
-        "content.js",
-        "proposed.js",
-        "timeline.js"
+        "src/ado/content.js",
+        "src/ado/proposed.js",
+        "src/ado/timeline.js"
       ],
       "matches": [
-        "https://microsoft.visualstudio.com/*",
+        "*://*.visualstudio.com/*",
         "https://dev.azure.com/*"
       ],
       "run_at": "document_idle"
-    }
-  ],
-  "permissions": [
-    "storage"
-  ],
-  "action": {
-    "default_popup": "popup.html"
-  },
-  "icons": {
-    "16": "ado2a16.png",
-    "32": "ado2a32.png",
-    "64": "ado2a64.png",
-    "128": "ado2a128.png"
-  },
-  "web_accessible_resources": [
+    },
     {
-      "resources": [
-        "timeline.html"
+      "js": [
+        "src/ado/content-script.ts"
       ],
-      "matches": [
-        "https://microsoft.visualstudio.com/*",
-        "https://dev.azure.com/*"
-      ]
+      "matches": ["*://*.visualstudio.com/*/_sprints/*"],
+      "run_at": "document_idle"
     }
-  ]
+  ],
+  "icons": {
+    "32": "src/assets/icons/32.png",
+    "64": "src/assets/icons/64.png",
+    "128": "src/assets/icons/128.png"
+  }
 }
