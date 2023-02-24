@@ -33,7 +33,7 @@ export async function SummaryForIteration(iterationId: string) {
     const iteration = await GetIteration(config, iterationId);
     const workItemIds = await GetWorkItemsFromStorageByIteration(iterationId);
 
-    const {startDate, finishDate} = iteration.attributes;
+    const { startDate, finishDate } = iteration.attributes;
 
     let summary: IterationSummary = {
         iteration: iteration,
@@ -61,7 +61,7 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     const workItemHistory = await GetWorkItemHistory(config, workItemId);
 
 
-    if (workItemHistory.count === 0) {
+    if (workItemHistory.count === 0 || !workItemHistory.value[0].fields?.["System.AuthorizedDate"]?.newValue) {
         console.warn(`No history for item ${workItemId}. Skipping`);
         return null;
     }
@@ -69,8 +69,9 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     // Beacuse the work item may have been made after the sprint started, we need to see when the item was created.
     // The first item in the work item history is the creation of the item and hence the timestamp of when it was created.
     // We're going to grab the item as it was either at the start of the iteration, or creation date. Whichever is later.
-    const workItemCreatedAt = dayjs(workItemHistory.value[0].revisedDate)
-    const queryDate = workItemCreatedAt.isAfter(startDate) ? workItemHistory.value[0].revisedDate : startDateStr;
+    const workItemCreatedAtStr = workItemHistory.value[0].fields?.["System.AuthorizedDate"]?.newValue
+    const workItemCreatedAt = dayjs(workItemCreatedAtStr)
+    const queryDate = workItemCreatedAt.isAfter(startDate) ? workItemCreatedAtStr : startDateStr;
     const workItem = await GetWorkItem(config, workItemId, queryDate)
     const extraData: IterationParserExtraData = {
         iteration: iteration
@@ -79,18 +80,16 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     let tags: Partial<WorkItemTags> = {}
     // Ignore any events that occured outside of our desired timeframe
     const relevantHistoryEvents = workItemHistory.value.filter(historyEvent => {
-        const revisedDate = dayjs(historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.revisedDate)
+        const revisedDate = dayjs(historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.fields?.["System.ChangedDate"]?.newValue)
         return revisedDate.isAfter(startDate) && revisedDate.isBefore(finishDate)
     });
-
 
     // Ignore this work item if not relevant to us
     if (
         workItem.fields["System.AssignedTo"].uniqueName !== config.email &&
         !(relevantHistoryEvents.some(
             historyEvent => historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName === config.email
-            )))
-    {
+        ))) {
         return null;
     }
 

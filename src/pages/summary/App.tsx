@@ -4,6 +4,7 @@ import MDEditor from "@uiw/react-md-editor";
 import logoPath from "../../assets/icons/128.png";
 import { IterationSummary } from "../../models/adoSummary";
 import { markdownTable } from 'markdown-table'
+import dayjs from "dayjs";
 
 const App = (): JSX.Element => {
   const [value, setValue] = useState("**Generating Summary...**");
@@ -18,55 +19,101 @@ const App = (): JSX.Element => {
     console.log("Got summary");
     console.log(request);
     const summary = request.summary as IterationSummary;
-    let summaryText = `# Sprint summary for ${summary.iteration.name}`
 
-    let table: string[][] = [
+    let overallTable: string[][] = [
       ['ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
     ]
+
+    let completedTable: string[][] = [
+      ['ID', 'Title', 'Moved In', 'Reassigned', 'Notes']
+    ]
+
+    let movedOutTable: string[][] = [
+      ['ID', 'Title', 'Notes']
+    ]
+
     for (let item of summary.workItems) {
-      let row: string[] = []
+      let overallRow: string[] = []
+      let completedRow: string[] = []
+      let movedOutRow: string[] = []
 
       // Work ID | Title | Type | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
-      row.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-      row.push(item.title.substring(0, 70))
+      overallRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
+      overallRow.push(item.title.substring(0, 70))
       // row.push("(type)")
 
 
       if (item.tags.completedByMe) {
-        row.push("X")
+        overallRow.push("X")
+        completedRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
+        completedRow.push(item.title.substring(0, 70))        
+        if (item.tags.moved?.intoIteration) {
+          overallRow.push("X")
+        } else {
+          overallRow.push("")
+        }
+        if (item.tags.reassigned?.toMe || item.tags.reassigned?.fromMe) {
+          completedRow.push("X");
+        } else {
+          completedRow.push("");
+        }
       } else {
-        row.push(" ")
+        overallRow.push("")
       }
 
       if (item.tags.moved?.intoIteration) {
-        row.push("X")
+        overallRow.push("X")
       } else {
-        row.push(" ")
+        overallRow.push("")
       }
 
       if (item.tags.reassigned?.toMe) {
-        row.push("X")
+        overallRow.push("X")
       } else {
-        row.push(" ")
+        overallRow.push("")
       }
 
       if (item.tags.reassigned?.fromMe) {
-        row.push("X")
+        overallRow.push("X")
       } else {
-        row.push(" ")
+        overallRow.push("")
       }
 
 
       if (item.tags.moved?.outOfIteration) {
-        row.push("X")
+        overallRow.push("X")
+        movedOutRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
+        movedOutRow.push(item.title.substring(0, 70))
+        movedOutRow.push("");   
       } else {
-        row.push(" ")
+        overallRow.push("")
       }
 
-      table.push(row);
+      overallTable.push(overallRow);
+      if (completedRow.length > 0) {
+        completedTable.push(completedRow);
+      }
+      if (movedOutRow.length > 0) {
+        movedOutTable.push(movedOutRow);
+      }
     }
 
-    setValue(`${summaryText}\n\n${markdownTable(table)}`);
+    setValue(
+`# Sprint summary for ${summary.iteration.name}
+
+## Completed:
+${markdownTable(completedTable)}
+
+## Moved Out:
+${markdownTable(movedOutTable)}
+
+## Detailed Breakdown
+${markdownTable(overallTable)}
+
+
+#### Generated on ${dayjs().format(`MM/DD/YYYY, hh:mma`)}
+`
+    );
   };
 
   useEffect(() => {
