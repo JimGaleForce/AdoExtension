@@ -23,15 +23,15 @@ const Config = (): JSX.Element => {
         setAdoxData(newData);
     }
 
-    const onQueryChanged = (scenarioQueryId: string) => {
+    const onQueryChanged = (queryId: string) => {
         var newData = { ...adoxData };
-        newData.scenarioQueryId = scenarioQueryId;
+        newData.queryId = queryId;
         setAdoxData(newData);
     }
 
-    const onScenarioQueryChanged = (queryId: string) => {
+    const onScenarioQueryChanged = (epicQueryId: string) => {
         var newData = { ...adoxData };
-        newData.queryId = queryId;
+        newData.epicQueryId = epicQueryId;
         setAdoxData(newData);
     }
 
@@ -158,7 +158,7 @@ const Config = (): JSX.Element => {
                                     type="text"
                                     name="epicSort"
                                     id="epicQueryId"
-                                    value={adoxData.queryId}
+                                    value={adoxData.epicQueryId}
                                     onChange={(e) => { onScenarioQueryChanged(e.target.value) }}
                                     className="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
                                 />
@@ -168,7 +168,7 @@ const Config = (): JSX.Element => {
                         <div>
                             <label htmlFor="epicSort">Sort by:</label>
 
-                            <select class='queryId' name="epicSort" id="epicSort">
+                            <select className='queryId' name="epicSort" id="epicSort">
                                 <option value="scenario">Scenario Title</option>
                                 <option value="duedate">Due Date</option>
                                 <option value="orderid">Order Id</option>

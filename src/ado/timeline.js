@@ -10,7 +10,7 @@ async function loadData() {
   }
 
   var urlFull = urlBase2 + "_apis/wit/wiql/" + epicQueryId;
-  await httpGetAsync(loadKRquery, urlFull);
+  await httpGetAsync2(loadKRquery, urlFull);
 }
 
 function newtitem(id) {
@@ -620,13 +620,15 @@ function afterLoadGraph(sb) {
 
 async function loadInitialTimelineData() {
   try {
+    console.log('loading in timeline');
     urlBase2 = document.URL.substring(0, document.URL.indexOf('_'));
     var data = await chrome.storage.sync.get(['adoxData']);
     epicQueryId = data.adoxData.epicQueryId;
+    console.log('loaded:' + epicQueryId);
     epicSort = data.adoxData.epicSort ?? 'duedate';
     loadData();
-  } catch {
-    failed = true;
+  } catch (e) {
+    console.error(e);
   }
 }
 

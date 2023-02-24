@@ -20,7 +20,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/pages/summary/index.html"
+        "src/pages/summary/index.html",
+        "src/adostyles.css"
       ],
       "matches": [
         "*://*.visualstudio.com/*",

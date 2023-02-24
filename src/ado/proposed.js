@@ -19,6 +19,7 @@ var ic_time = 4000; //first time
 var ic_timeCheck = ic_time;
 var biglist = null;
 var urlBase;
+var tableitem = null;
 
 function zeroCounts() {
   _tfs_counts = [];
