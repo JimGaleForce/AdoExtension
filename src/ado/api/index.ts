@@ -4,7 +4,9 @@ import { AdoConfigData } from "../../models/adoConfig";
 export async function GetIterations(
     config: AdoConfigData,
     onlyCurrentIteration = false): Promise<ListIteration> {
-    const { organization, project, team } = config;
+    const project = ExtractProject(config);
+    const team = ExtractTeam(config);
+    const { organization } = config;
     let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations`;
     if (onlyCurrentIteration) { url += "/?$timeframe=current" };
 
@@ -38,7 +40,9 @@ export async function getIterationsX(root: string, callback: any) {
 }
 
 export async function GetIteration(config: AdoConfigData, iterationId: string): Promise<Iteration> {
-    const { organization, project, team } = config;
+    const project = ExtractProject(config);
+    const team = ExtractTeam(config);
+    const { organization } = config;
     let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}?api-version=7.0`;
 
     const json = await fetch(url).then((response) => response.json());
@@ -66,10 +70,22 @@ export async function GetCurrentIteration(config: AdoConfigData): Promise<Iterat
     return iterations.value[0];
 }
 
+export function ExtractProject(config: AdoConfigData) {
+    return config && config.projectPath ? config.projectPath.substring(0, config.projectPath.indexOf('/')) : '';
+}
+
+export function ExtractTeam(config: AdoConfigData) {
+    return config && config.projectPath ? config.projectPath.substring(config.projectPath.lastIndexOf('/')+1) : '';
+}
+
 export async function GetItemsFromIteration(
     config: AdoConfigData,
-    iterationId: string): Promise<IterationWorkItems> {
-    const { organization, project, team } = config;
+    iterationId: string): Promise<IterationWorkItems> {        
+
+    const project = ExtractProject(config);
+    const team = ExtractTeam(config);
+    const { organization } = config;
+
     const url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}/workitems?api-version=7.0`
 
     const json = await fetch(url).then((response) => response.json());
@@ -86,7 +102,8 @@ export async function GetItemsFromIteration(
 export async function GetBatchItemDetails(
     config: AdoConfigData,
     workItemIds: string[]): Promise<BatchWorkItems> {
-    const { organization, project } = config;
+        const project = ExtractProject(config);
+        const { organization } = config;
     const obj = {
         ids: workItemIds,
         fields: [
@@ -139,7 +156,8 @@ export async function GetWorkItemHistory(config: AdoConfigData, workItemId: numb
  * @throws {Error} if item does not exist
  */
 export async function GetWorkItem(config: AdoConfigData, workItemId: number, asOf?: string): Promise<WorkItem> {
-    const { organization, project } = config;
+    const project = ExtractProject(config);
+    const { organization } = config;
     const url = `https://dev.azure.com/${organization}/${project}/_apis/wit/workitems/${workItemId}?api-version=7.0${asOf ? `&asOf=${asOf}` : ""}`
 
     const json = await fetch(url).then((response) => response.json());

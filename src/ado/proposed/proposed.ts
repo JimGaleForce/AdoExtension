@@ -3,7 +3,7 @@
 //rev: 2.0 2022-10-08
 //rev: 2.1 2023-02-27
 
-import { getIterationsX } from "../api";
+import { ExtractTeam, getIterationsX } from "../api";
 
 //purpose: highlights 'Proposed' tasks in yellow on top of the green/red tfs capacities.
 //requires: a query id that matches the current sprint's workitems (or at least ones you want to count).
@@ -58,7 +58,9 @@ export class Proposed {
 
     //get the current iteration
     //urlBase2 + adox.team
-    await getIterationsX.call(this, this.urlBase + this.adox.team, (data:any) => this.getIterationData(data) )
+    debugger;
+    const team = ExtractTeam(this.adox);
+    await getIterationsX.call(this, this.urlBase + team, (data:any) => this.getIterationData(data) )
   }
 
   private getIterationData(list: any) {
@@ -68,7 +70,6 @@ export class Proposed {
       if (item.attributes.timeFrame != 'past') {
         this.iterations.push(item);
       }
-
     }
   
     this.overall2--;
@@ -285,7 +286,7 @@ export class Proposed {
     }
 
     // get current iteration data
-    var pathTeam = this.adox.queryId.replace(/\//g,'\\');
+    var pathTeam = this.adox.projectPath.replace(/\//g,'\\');
     var wiqlQuery = "SELECT [System.Id], [System.WorkItemType], [Microsoft.VSTS.Common.CustomString07], [System.Title], [System.State], [System.AssignedTo], [OSG.RemainingDays], [System.IterationLevel3], [Microsoft.VSTS.Common.CustomString08], [System.Parent], [System.TeamProject], [System.Tags], [OSG.Order], [System.AreaId], [System.IterationPath], [System.IterationId], [System.AreaPath], [Microsoft.VSTS.CMMI.TaskType] FROM workitemLinks WHERE (([Source].[System.WorkItemType] IN ('Task', 'Bug') AND [Source].[System.State] IN ('Proposed', 'Active', 'Committed', 'Started', 'Resolved', 'Completed', 'Closed')) OR ([Source].[System.WorkItemType] IN ('Task Group', 'Deliverable') AND [Source].[System.State] IN ('Proposed', 'Committed', 'Started', 'Completed'))) AND [Source].[System.IterationPath] UNDER 'Edge' AND [Source].[System.AreaPath] UNDER 'Edge\\Growth\\Feedback and Diagnostics' AND ([System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward') AND ((([Target].[System.WorkItemType] IN ('Task', 'Bug') AND [Target].[System.State] IN ('Proposed', 'Active', 'Committed', 'Started', 'Resolved', 'Completed', 'Closed')) OR ([Target].[System.WorkItemType] IN ('Task Group', 'Deliverable') AND [Target].[System.State] IN ('Proposed', 'Committed', 'Started', 'Completed'))) AND [Target].[System.IterationPath] "+
     "UNDER '"+currentIteration[0].path+"' AND [Target].[System.AreaPath] UNDER '"+pathTeam+"') ORDER BY [OSG.Order], [System.Id] MODE (Recursive, ReturnMatchingChildren)";
     // wiqlQuery = "SELECT TOP 100 [System.Id], [System.WorkItemType], [System.Title] FROM workitemLinks WHERE [System.State] = 'Active'";

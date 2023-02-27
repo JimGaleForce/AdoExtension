@@ -6,8 +6,7 @@ export type AdoConfigData = {
     colors: string[]
     email: string
     organization: string
-    project: string
-    team: string
+    projectPath: string;
 }
 
 export const baseConfig: AdoConfigData = {
@@ -22,8 +21,7 @@ export const baseConfig: AdoConfigData = {
     ],
     email: "",
     organization: "microsoft",
-    project: "Edge",
-    team: ""
+    projectPath: "Edge/Growth/Feedback and Diagnostics"
 }
 
 export const loadConfig: () => Promise<AdoConfigData> = () => {
@@ -49,8 +47,7 @@ export async function isValidConfig(): Promise<boolean> {
         if (
             isEmpty(config.email) ||
             isEmpty(config.organization) ||
-            isEmpty(config.project) ||
-            isEmpty(config.team)
+            isEmpty(config.projectPath)
         ) {
             return false;
         }

@@ -47,18 +47,11 @@ const Config = (): JSX.Element => {
         setAdoxData(newData);
     }
 
-    const onProjectChanged = (project: string) => {
+    const onProjectChanged = (projectPath: string) => {
         var newData = { ...adoxData };
-        newData.project = project;
+        newData.projectPath = projectPath;
         setAdoxData(newData);
     }
-
-    const onTeamChanged = (team: string) => {
-        var newData = { ...adoxData };
-        newData.team = team;
-        setAdoxData(newData);
-    }
-
 
     // Load colors from storage
     useEffect(() => {
@@ -211,35 +204,21 @@ const Config = (): JSX.Element => {
 
                         <div >
                             <label htmlFor="project" className="block text-sm font-medium text-gray-700">
-                                Project
+                                Project to Team path
                             </label>
                             <div className="mt-1">
                                 <input
                                     type="text"
                                     name="project"
                                     id="project"
-                                    value={adoxData.project}
+                                    value={adoxData.projectPath}
+                                    placeholder="Edge/Growth/Feedback and Diagnostics"
                                     onChange={(e) => { onProjectChanged(e.target.value) }}
                                     className="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
                                 />
                             </div>
                         </div>
 
-                        <div >
-                            <label htmlFor="team" className="block text-sm font-medium text-gray-700">
-                                Team
-                            </label>
-                            <div className="mt-1">
-                                <input
-                                    type="text"
-                                    name="team"
-                                    id="team"
-                                    value={adoxData.team}
-                                    onChange={(e) => { onTeamChanged(e.target.value) }}
-                                    className="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
-                                />
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

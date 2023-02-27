@@ -108,3 +108,4 @@ dist
 
 # Apple Filesystem
 **/.DS_Store
+dist.zip
