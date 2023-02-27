@@ -19,6 +19,24 @@ export async function GetIterations(
     return json as ListIteration;
 }
 
+export async function httpGetAsyncX(callback: { (list: any): void; (arg0: string): any; }, theUrl: string | URL) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = async () => {
+      if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+        await callback(xmlHttp.responseText);
+      }
+    }
+    xmlHttp.open("GET", theUrl, true);
+    xmlHttp.send(null);
+  }
+  
+
+export async function getIterationsX(root: string, callback: any) {
+    const url = root + "/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1";
+    await httpGetAsyncX(callback, url);
+    //https://microsoft.visualstudio.com/Edge/Feedback%20and%20Diagnostics/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1
+}
+
 export async function GetIteration(config: AdoConfigData, iterationId: string): Promise<Iteration> {
     const { organization, project, team } = config;
     let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}?api-version=7.0`;

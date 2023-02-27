@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ADO Power Tools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "background": {
     "service_worker": "src/background.ts"
   },
@@ -36,7 +36,6 @@
       ],
       "js": [
         "src/ado/content.js",
-        "src/ado/proposed.js",
         "src/ado/timeline.js"
       ],
       "matches": [
@@ -47,7 +46,8 @@
     },
     {
       "js": [
-        "src/ado/content-script.ts"
+        "src/ado/content-script.ts",
+        "src/ado/main.ts"
       ],
       "matches": [
         "*://*.visualstudio.com/*/_sprints/*"

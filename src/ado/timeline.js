@@ -12,6 +12,7 @@ async function loadData() {
 
   var urlFull = urlBase2 + "_apis/wit/wiql/" + epicQueryId;
   await httpGetAsync2(loadKRquery, urlFull);
+
 }
 
 function newtitem(id) {
@@ -437,9 +438,11 @@ var overall2 = 0;
 var tick2 = 0;
 
 async function getIterations() {
-  const url = urlBase2 + adox.team + "/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1";
-  await httpGetAsync2(getIterationData, url);
-  //https://microsoft.visualstudio.com/Edge/Feedback%20and%20Diagnostics/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1
+  if (iterations.length === 0) {
+    const url = urlBase2 + adox.team + "/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1";
+    await httpGetAsync2(getIterationData, url);
+    //https://microsoft.visualstudio.com/Edge/Feedback%20and%20Diagnostics/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1
+  }
 }
 
 var iterations = [];
@@ -479,6 +482,27 @@ function httpGet2(theUrl) {
   xmlHttp.send(null);
   return xmlHttp.responseText;
 }
+
+// function executeWiqlQuery(query, organization, project, pat) {
+//   // Set up the API endpoint and authentication
+//   const url = urlBase2 + adox.team + "/_apis/wit/wiql?api-version=6.0";
+// //  var headers = { 'Content-Type': 'application/json' };
+// //  var auth = `:${pat}`;
+
+//   // Define the query parameters as a JSON object
+//   var params = { query: query };
+
+//   // Send the request to execute the query
+//   var xhr = new XMLHttpRequest();
+//   xhr.open('POST', url, false);
+// //  xhr.setRequestHeader('Authorization', 'Basic ' + btoa(auth));
+//   xhr.setRequestHeader('Content-Type', 'application/json');
+//   xhr.send(JSON.stringify(params));
+
+//   // Parse the response JSON
+//   var response = JSON.parse(xhr.responseText);
+//   return response.workItems;
+// }
 
 function getKRDataCreateTable(list) {
   const listobj = JSON.parse(list);
@@ -557,6 +581,17 @@ async function httpGetAsync2(callback, theUrl) {
   }
   xmlHttp.open("GET", theUrl, true);
   xmlHttp.send(null);
+}
+
+async function httpPostAsync2(callback, theUrl, data) {
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.onreadystatechange = async () => {
+    if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
+      await callback(xmlHttp.responseText);
+  }
+  xmlHttp.open("POST", theUrl, true);
+  xmlHttp.setRequestHeader("Content-type", "application/json");
+  xmlHttp.send(JSON.stringify(data));
 }
 
 function createTimeGraphs(event) {
