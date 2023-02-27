@@ -58,7 +58,7 @@ export class Proposed {
 
     //get the current iteration
     //urlBase2 + adox.team
-    await getIterationsX.call(this, this.urlBase + this.adox.team, data=>this.getIterationData(data) )
+    await getIterationsX.call(this, this.urlBase + this.adox.team, (data:any) => this.getIterationData(data) )
   }
 
   private getIterationData(list: any) {
