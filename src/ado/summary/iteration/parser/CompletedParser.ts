@@ -19,7 +19,8 @@ export const CompletedParser: IterationItemParser = async (config, _workItem, wo
             historyEvent.fields?.["System.State"]?.newValue &&
             !(
                 historyEvent.fields?.["System.State"].newValue === 'Completed' ||
-                historyEvent.fields?.["System.State"].newValue === 'Resolved'
+                historyEvent.fields?.["System.State"].newValue === 'Resolved' ||
+                historyEvent.fields?.["System.State"].newValue === 'Closed'
             )
             ) {
                 completedTag.completedByMe = false
