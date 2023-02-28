@@ -53,6 +53,7 @@ const App = (): JSX.Element => {
         overallRow.push("X")
         completedRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
         completedRow.push(item.title.substring(0, 70));
+        completedRow.push("X");
         if (item.tags.reassigned?.toMe || item.tags.reassigned?.fromMe) {
           completedRow.push("X");
         } else {
@@ -102,13 +103,13 @@ const App = (): JSX.Element => {
     setValue(
 `# Sprint summary for ${summary.iteration.name}
 
-## Completed:
+**Completed:**
 ${markdownTable(completedTable)}
 
-## Moved Out:
+**Moved Out:**
 ${markdownTable(movedOutTable)}
 
-## Detailed Breakdown
+**Detailed Breakdown**
 ${markdownTable(overallTable)}
 
 
