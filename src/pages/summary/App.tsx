@@ -9,7 +9,11 @@ import { useSearchParams } from "react-router-dom";
 import { GenerateIterationSummaryAction } from "../../models/actions";
 
 const App = (): JSX.Element => {
-  const [value, setValue] = useState("**Generating Summary...**");
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [iterationId, setIterationId] = useState<string | null>(null)
+  const [value, setValue] = useState("**No iteration specified; Waiting...**");
+
+
   const onMessage = async (
     request: any,
     sender: chrome.runtime.MessageSender,
