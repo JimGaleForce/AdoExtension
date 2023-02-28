@@ -27,7 +27,7 @@ const App = (): JSX.Element => {
     const summary = request.summary as IterationSummary;
 
     let overallTable: string[][] = [
-      ['ID', 'Type', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
+      ['Type', 'ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
     ]
 
     let completedTable: string[][] = [
@@ -44,9 +44,21 @@ const App = (): JSX.Element => {
       let movedOutRow: string[] = []
       let title = item.title.length > 70 ? item.title.substring(0, 70).concat('...') : item.title;
 
-      // Work ID | Type | Title | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
+      // Type | Work ID | Title | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
+      switch (item.tags.workItemType) {
+        case 'Task':
+          overallRow.push('✅');
+          break;
+        case 'Deliverable':
+          overallRow.push('🏆');
+          break;
+        case 'Bug':
+          overallRow.push('🐜');
+          break;
+        default:
+          overallRow.push(item.tags.workItemType ?? '');
+      }
       overallRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-      overallRow.push(item.tags.workItemType ?? '');
       overallRow.push(title);
       // row.push("(type)")
 
