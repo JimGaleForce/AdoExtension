@@ -13,7 +13,7 @@ const App = (): JSX.Element => {
   const [iterationId, setIterationId] = useState<string>()
   const [value, setValue] = useState("**No iteration specified; Waiting...**");
   const [loaded, setLoaded] = useState<boolean>()
-  const [generated, setGenerated] = useState<boolean>()
+  const [generateRequestSent, setGenerateRequestSent] = useState<boolean>()
 
 
   const onMessage = async (
@@ -120,7 +120,6 @@ const App = (): JSX.Element => {
       }
     }
 
-    setGenerated(true);
     setValue(
 `# Sprint summary for ${summary.iteration.name}
 
@@ -152,23 +151,24 @@ ${markdownTable(overallTable)}
     let newIterationId = searchParams.get('iteration')
     if (iterationId !== newIterationId) {
       setIterationId(newIterationId ?? undefined);
-      setGenerated(false)
+      setGenerateRequestSent(false)
     }
   }, [iterationId, searchParams]);
 
   useEffect(() => {
-    if (!iterationId || iterationId === null || generated) {
+    if (!iterationId || iterationId === null || generateRequestSent) {
       return;
     }
 
     setValue(`**Generating summary...**`);
+    setGenerateRequestSent(true);
 
     const action: GenerateIterationSummaryAction = {
       action: 'GenerateIterationSummary',
       iterationId: iterationId
     }
     chrome.runtime.sendMessage(action, (resp) => {});
-  }, [iterationId, generated]);
+  }, [iterationId, generateRequestSent]);
 
   return (
     <>
