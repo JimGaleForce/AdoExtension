@@ -46,12 +46,7 @@ const App = (): JSX.Element => {
       if (item.tags.completedByMe) {
         overallRow.push("X")
         completedRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-        completedRow.push(item.title.substring(0, 70))        
-        if (item.tags.moved?.intoIteration) {
-          overallRow.push("X")
-        } else {
-          overallRow.push("")
-        }
+        completedRow.push(item.title.substring(0, 70));
         if (item.tags.reassigned?.toMe || item.tags.reassigned?.fromMe) {
           completedRow.push("X");
         } else {
@@ -84,7 +79,7 @@ const App = (): JSX.Element => {
         overallRow.push("X")
         movedOutRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
         movedOutRow.push(item.title.substring(0, 70))
-        movedOutRow.push("");   
+        movedOutRow.push("");
       } else {
         overallRow.push("")
       }

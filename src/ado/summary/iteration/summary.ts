@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { Iteration } from "../../../models/adoApi";
+import { Iteration, WorkItemHistory } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../../models/adoSummary";
 import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
@@ -58,7 +58,13 @@ export async function SummaryForIteration(iterationId: string) {
 async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
-    const workItemHistory = await GetWorkItemHistory(config, workItemId);
+
+    let workItemHistory: WorkItemHistory;
+    try {
+        workItemHistory = await GetWorkItemHistory(config, workItemId);
+    } catch {
+        return null;
+    }
 
 
     if (workItemHistory.count === 0 || !workItemHistory.value[0].fields?.["System.AuthorizedDate"]?.newValue) {
