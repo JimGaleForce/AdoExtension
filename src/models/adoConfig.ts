@@ -6,6 +6,9 @@ export type AdoConfigData = {
     email: string
     organization: string
     projectPath: string;
+    isHighlight: boolean;
+    isProposed: boolean;
+    isTimeline: boolean;    
 }
 
 export const baseConfig: AdoConfigData = {
@@ -19,7 +22,10 @@ export const baseConfig: AdoConfigData = {
     ],
     email: "",
     organization: "microsoft",
-    projectPath: "Edge/Growth/Feedback and Diagnostics"
+    projectPath: "Edge/Growth/Feedback and Diagnostics",
+    isHighlight: true,
+    isProposed: true,
+    isTimeline: true
 }
 
 export const loadConfig: () => Promise<AdoConfigData> = () => {

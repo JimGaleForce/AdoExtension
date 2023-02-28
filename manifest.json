@@ -35,8 +35,7 @@
         "src/adostyles.css"
       ],
       "js": [
-        "src/ado/content.js",
-        "src/ado/timeline.js"
+        "src/ado/content.js"
       ],
       "matches": [
         "*://*.visualstudio.com/*",

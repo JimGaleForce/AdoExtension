@@ -155,7 +155,7 @@ export class Timeline {
     }
 
     private checkOverall3() {
-        if (this.overall3 > 0) {
+        if (this.overall3 > 0 || !this.adox.isTimeline) {
             return;
         }
 
@@ -684,6 +684,10 @@ export class Timeline {
             this.urlBase2 = document.URL.substring(0, document.URL.indexOf('_'));
             var data = await chrome.storage.sync.get(['adoxData']);
             this.adox = data.adoxData;
+            if (typeof this.adox.isTimeline != 'boolean') {
+                this.adox.isTimeline = true;
+              }
+        
             this.epicSort = data.adoxData.epicSort ?? 'duedate';
             this.loadData();
         } catch (e) {

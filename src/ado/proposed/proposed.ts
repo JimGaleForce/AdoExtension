@@ -40,6 +40,9 @@ export class Proposed {
       this.urlBase = document.URL.substring(0, document.URL.indexOf('_'));
       var data = await chrome.storage.sync.get(['adoxData']);
       this.adox = data.adoxData;
+      if (typeof this.adox.isProposed != 'boolean') {
+        this.adox.isProposed = true;
+      }
 
     } catch {
     }
@@ -81,6 +84,11 @@ export class Proposed {
   }
   
   private ic_checkForChanges() {
+    if (!this.adox.isProposed) {
+      setTimeout(() => this.ic_checkForChanges(), this.ic_time);
+      return;
+    }
+
     this.updateCounts();
     setTimeout(() => this.ic_checkForChanges(), this.ic_time);
   

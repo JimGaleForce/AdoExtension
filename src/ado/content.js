@@ -10,6 +10,11 @@ async function loadColors(failed = false) {
   try {
     var data = await chrome.storage.sync.get(['adoxData']);
     adoxData = data.adoxData;
+
+    if (typeof adoxData.isHighlight != 'boolean') {
+      adoxData.isHighlight = true;
+    }
+
     if (!firstLoaded) {
       firstLoaded = true;
       if (adoxData.searchText && adoxData.searchText.length > 0 && document.getElementsByClassName('search-input').length>0) {
@@ -66,6 +71,10 @@ async function highLine() {
   // if localstorage is undefined, load
   if (typeof adoxData == 'undefined' || adoxData === null) {
     await loadColors();
+  }
+
+  if (!adoxData.isHighlight) {
+    return;
   }
 
   // get 'something has changed' event
