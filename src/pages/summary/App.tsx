@@ -27,7 +27,7 @@ const App = (): JSX.Element => {
     const summary = request.summary as IterationSummary;
 
     let overallTable: string[][] = [
-      ['ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
+      ['ID', 'Type', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
     ]
 
     let completedTable: string[][] = [
@@ -42,18 +42,24 @@ const App = (): JSX.Element => {
       let overallRow: string[] = []
       let completedRow: string[] = []
       let movedOutRow: string[] = []
+      let title = item.title.length > 70 ? item.title.substring(0, 70).concat('...') : item.title;
 
-      // Work ID | Title | Type | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
+      // Work ID | Type | Title | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
       overallRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-      overallRow.push(item.title.substring(0, 70))
+      overallRow.push(item.tags.workItemType ?? '');
+      overallRow.push(title);
       // row.push("(type)")
 
 
       if (item.tags.completedByMe) {
         overallRow.push("X")
         completedRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-        completedRow.push(item.title.substring(0, 70));
-        completedRow.push("X");
+        completedRow.push(title);
+        if (item.tags.moved?.intoIteration) {
+          completedRow.push("X")
+        } else {
+          completedRow.push("")
+        }
         if (item.tags.reassigned?.toMe || item.tags.reassigned?.fromMe) {
           completedRow.push("X");
         } else {
@@ -85,7 +91,7 @@ const App = (): JSX.Element => {
       if (item.tags.moved?.outOfIteration) {
         overallRow.push("X")
         movedOutRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-        movedOutRow.push(item.title.substring(0, 70))
+        movedOutRow.push(title)
         movedOutRow.push("");
       } else {
         overallRow.push("")
