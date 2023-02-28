@@ -5,6 +5,8 @@ import logoPath from "../../assets/icons/128.png";
 import { IterationSummary } from "../../models/adoSummary";
 import { markdownTable } from 'markdown-table'
 import dayjs from "dayjs";
+import { useSearchParams } from "react-router-dom";
+import { GenerateIterationSummaryAction } from "../../models/actions";
 
 const App = (): JSX.Element => {
   const [value, setValue] = useState("**Generating Summary...**");
@@ -114,6 +116,27 @@ ${markdownTable(overallTable)}
   useEffect(() => {
     chrome.runtime.onMessage.addListener(onMessage);
   }, []);
+
+  useEffect(() => {
+    const newIterationId = searchParams.get('iteration')
+    if (iterationId !== newIterationId) {
+      setIterationId(newIterationId);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (iterationId === null) {
+      return;
+    }
+
+    setValue(`**Generating summary...**`);
+
+    const action: GenerateIterationSummaryAction = {
+      action: 'GenerateIterationSummary',
+      iterationId: iterationId
+    }
+    chrome.runtime.sendMessage(action, (resp) => {});
+  }, [iterationId]);
 
   return (
     <>
