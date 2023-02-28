@@ -10,8 +10,10 @@ import { GenerateIterationSummaryAction } from "../../models/actions";
 
 const App = (): JSX.Element => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [iterationId, setIterationId] = useState<string | null>(null)
+  const [iterationId, setIterationId] = useState<string>()
   const [value, setValue] = useState("**No iteration specified; Waiting...**");
+  const [loaded, setLoaded] = useState<boolean>()
+  const [generated, setGenerated] = useState<boolean>()
 
 
   const onMessage = async (
@@ -118,6 +120,7 @@ const App = (): JSX.Element => {
       }
     }
 
+    setGenerated(true);
     setValue(
 `# Sprint summary for ${summary.iteration.name}
 
@@ -137,18 +140,24 @@ ${markdownTable(overallTable)}
   };
 
   useEffect(() => {
-    chrome.runtime.onMessage.addListener(onMessage);
-  }, []);
-
-  useEffect(() => {
-    const newIterationId = searchParams.get('iteration')
-    if (iterationId !== newIterationId) {
-      setIterationId(newIterationId);
+    if (loaded) {
+      return;
     }
-  }, [searchParams]);
+
+    chrome.runtime.onMessage.addListener(onMessage);
+    setLoaded(true);
+  }, [loaded]);
 
   useEffect(() => {
-    if (iterationId === null) {
+    let newIterationId = searchParams.get('iteration')
+    if (iterationId !== newIterationId) {
+      setIterationId(newIterationId ?? undefined);
+      setGenerated(false)
+    }
+  }, [iterationId, searchParams]);
+
+  useEffect(() => {
+    if (!iterationId || iterationId === null || generated) {
       return;
     }
 
@@ -159,7 +168,7 @@ ${markdownTable(overallTable)}
       iterationId: iterationId
     }
     chrome.runtime.sendMessage(action, (resp) => {});
-  }, [iterationId]);
+  }, [iterationId, generated]);
 
   return (
     <>
