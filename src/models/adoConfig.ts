@@ -1,8 +1,7 @@
 import { GetCurrentIteration } from "../ado/api"
 
 export type AdoConfigData = {
-    queryId: string
-    epicQueryId: string
+    searchText: string
     colors: string[]
     email: string
     organization: string
@@ -10,8 +9,7 @@ export type AdoConfigData = {
 }
 
 export const baseConfig: AdoConfigData = {
-    queryId:"",
-    epicQueryId: "",
+    searchText: "Completed|Resolved|Closed,Proposed|Consider,Committed|Active|Bug Understood,Started|Under Development",
     colors: [
         '#ccFFcc',
         '#FFFFcc',

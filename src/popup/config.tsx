@@ -23,15 +23,9 @@ const Config = (): JSX.Element => {
         setAdoxData(newData);
     }
 
-    const onQueryChanged = (queryId: string) => {
+    const onSearchTextChanged = (searchText: string) => {
         var newData = { ...adoxData };
-        newData.queryId = queryId;
-        setAdoxData(newData);
-    }
-
-    const onScenarioQueryChanged = (epicQueryId: string) => {
-        var newData = { ...adoxData };
-        newData.epicQueryId = epicQueryId;
+        newData.searchText = searchText;
         setAdoxData(newData);
     }
 
@@ -127,39 +121,23 @@ const Config = (): JSX.Element => {
                         </div>
 
                         <div >
-                            <label htmlFor="queryId" className="block text-sm font-medium text-gray-700">
-                                Sprint Query ID
+                            <label htmlFor="searchText" className="block text-sm font-medium text-gray-700">
+                                Default search text for highlighting
                             </label>
                             <div className="mt-1">
                                 <input
                                     type="text"
-                                    name="queryId"
-                                    id="queryId"
-                                    value={adoxData.queryId}
-                                    onChange={(e) => { onQueryChanged(e.target.value) }}
-                                    className="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
-                                />
-                            </div>
-                        </div>
-
-                        <div >
-                            <label htmlFor="epicQueryId" className="block text-sm font-medium text-gray-700">
-                                Scenario Query ID
-                            </label>
-                            <div className="mt-1">
-                                <input
-                                    type="text"
-                                    name="epicSort"
-                                    id="epicQueryId"
-                                    value={adoxData.epicQueryId}
-                                    onChange={(e) => { onScenarioQueryChanged(e.target.value) }}
+                                    name="searchText"
+                                    id="searchText"
+                                    value={adoxData.searchText}
+                                    onChange={(e) => { onSearchTextChanged(e.target.value) }}
                                     className="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="epicSort">Sort by:</label>
+                            <label htmlFor="epicSort">Timeline sort by:</label>
 
                             <select className='queryId' name="epicSort" id="epicSort">
                                 <option value="scenario">Scenario Title</option>

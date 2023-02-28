@@ -16,7 +16,6 @@ import { ExtractTeam, getIterationsX } from "../api";
 
 export class Proposed {
   private _tfs_counts: any[] = [];
-  // private queryId: string | any[] | null = null;
   private ic_currentLength = 0;
   private ic_time = 4000;
   private ic_timeCheck = 4000;
@@ -40,7 +39,6 @@ export class Proposed {
     try {
       this.urlBase = document.URL.substring(0, document.URL.indexOf('_'));
       var data = await chrome.storage.sync.get(['adoxData']);
-      // this.queryId = data.adoxData.queryId;
       this.adox = data.adoxData;
 
     } catch {
@@ -48,17 +46,6 @@ export class Proposed {
   }
   
   private async init() {
-    //get the query id from the config
-    //get the epic query id from the config
-    //get the colors from the config
-    //get the email from the config
-    //get the organization from the config
-    //get the project from the config
-    //get the team from the config
-
-    //get the current iteration
-    //urlBase2 + adox.team
-    debugger;
     const team = ExtractTeam(this.adox);
     await getIterationsX.call(this, this.urlBase + team, (data:any) => this.getIterationData(data) )
   }
@@ -94,10 +81,6 @@ export class Proposed {
   }
   
   private ic_checkForChanges() {
-    // if (typeof this.queryId === 'undefined' || this.queryId == null || this.queryId.length == 0) {
-    //   return;
-    // }
-  
     this.updateCounts();
     setTimeout(() => this.ic_checkForChanges(), this.ic_time);
   
@@ -255,7 +238,6 @@ export class Proposed {
   
   
   private getData() {
-    // var urlFull = this.urlBase + "_apis/wit/queries/" + this.queryId;
     this.getQueryId();
   }
   
@@ -293,9 +275,6 @@ export class Proposed {
   
     var urlFull = this.urlBase + "_apis/wit/wiql?api-version=6.0";
     this.httpPostAsync((d)=>this.getDataIds(d), urlFull, { query: wiqlQuery });
-  
-    //var url = urlBase + "_apis/wit/wiql/" + queryId + "?api-version=2.2";
-    //httpGetAsync(getDataIds, url);
   }
   
   private getDataIds(data: string) {

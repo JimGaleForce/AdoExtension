@@ -1,5 +1,6 @@
 var adoxData;
 var adoxChanged = true;
+var firstLoaded = false;
 
 function waitFirst() {
   window.setInterval(highLine, 1000);
@@ -9,6 +10,15 @@ async function loadColors(failed = false) {
   try {
     var data = await chrome.storage.sync.get(['adoxData']);
     adoxData = data.adoxData;
+    if (!firstLoaded) {
+      firstLoaded = true;
+      if (adoxData.searchText && adoxData.searchText.length > 0 && document.getElementsByClassName('search-input').length>0) {
+        var input = document.getElementsByClassName('search-input')[0].value;
+        if (typeof(input) === 'string' && input.length===0) {
+          document.getElementsByClassName('search-input')[0].value = adoxData.searchText;
+        }
+      }
+    }
   } catch {
     failed = true;
   }
@@ -16,14 +26,6 @@ async function loadColors(failed = false) {
   if (typeof adoxData == 'undefined' || adoxData === null) {
     adoxData = {};
     failed = true;
-  }
-
-  if (typeof adoxData.queryId === 'undefined') {
-    adoxData.queryId = '';
-  }
-
-  if (typeof adoxData.epicQueryId === 'undefined') {
-    adoxData.epicQueryId = '';
   }
 
   if (typeof adoxData.epicSort === 'undefined') {
