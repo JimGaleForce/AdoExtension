@@ -3,6 +3,7 @@ import { CapacityTag } from './CapacityTag';
 import { CompletedTag } from './CompletedTag';
 import { IterationTrackerTag } from './IterationTrackerTag';
 import { ReassignedTag } from './ReassignedTag';
+import { WorkItemTypeTag } from './WorkItemTypeTag';
 
 export * from './BaseTag'
 export * from './BugTag'
@@ -16,3 +17,4 @@ export type WorkItemTags =
 & CompletedTag
 & IterationTrackerTag
 & ReassignedTag
+& WorkItemTypeTag

@@ -1,3 +1,5 @@
+import { OpenIterationSummaryAction } from "../models/actions";
+
 // @ts-ignore: valid import
 import mainWorld from "./content-script-main-world?script&module";
 
@@ -19,10 +21,11 @@ document.addEventListener('getSummaryForIteration', function (e: any) {
     const iteration = e.detail;
 
     if (iteration) {
-        chrome.runtime.sendMessage({
-            action: 'iterationSummary',
-            iteration: iteration
-        }, (resp) => {});
+        const action: OpenIterationSummaryAction = {
+            action: 'OpenIterationSummary',
+            iteration
+        }
+        chrome.runtime.sendMessage(action , (resp) => {});
     }
 });
 

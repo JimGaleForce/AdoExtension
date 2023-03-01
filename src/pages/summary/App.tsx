@@ -5,9 +5,17 @@ import logoPath from "../../assets/icons/128.png";
 import { IterationSummary } from "../../models/adoSummary";
 import { markdownTable } from 'markdown-table'
 import dayjs from "dayjs";
+import { useSearchParams } from "react-router-dom";
+import { GenerateIterationSummaryAction } from "../../models/actions";
 
 const App = (): JSX.Element => {
-  const [value, setValue] = useState("**Generating Summary...**");
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [iterationId, setIterationId] = useState<string>()
+  const [value, setValue] = useState("**No iteration specified; Waiting...**");
+  const [loaded, setLoaded] = useState<boolean>()
+  const [generateRequestSent, setGenerateRequestSent] = useState<boolean>()
+
+
   const onMessage = async (
     request: any,
     sender: chrome.runtime.MessageSender,
@@ -21,7 +29,7 @@ const App = (): JSX.Element => {
     const summary = request.summary as IterationSummary;
 
     let overallTable: string[][] = [
-      ['ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
+      ['Type', 'ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off',  'Punted']
     ]
 
     let completedTable: string[][] = [
@@ -36,21 +44,35 @@ const App = (): JSX.Element => {
       let overallRow: string[] = []
       let completedRow: string[] = []
       let movedOutRow: string[] = []
+      let title = item.title.length > 70 ? item.title.substring(0, 70).concat('...') : item.title;
 
-      // Work ID | Title | Type | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
+      // Type | Work ID | Title | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
+      switch (item.tags.workItemType) {
+        case 'Task':
+          overallRow.push('✅');
+          break;
+        case 'Deliverable':
+          overallRow.push('🏆');
+          break;
+        case 'Bug':
+          overallRow.push('🐜');
+          break;
+        default:
+          overallRow.push(item.tags.workItemType ?? '');
+      }
       overallRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-      overallRow.push(item.title.substring(0, 70))
+      overallRow.push(title);
       // row.push("(type)")
 
 
       if (item.tags.completedByMe) {
         overallRow.push("X")
         completedRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-        completedRow.push(item.title.substring(0, 70))        
+        completedRow.push(title);
         if (item.tags.moved?.intoIteration) {
-          overallRow.push("X")
+          completedRow.push("X")
         } else {
-          overallRow.push("")
+          completedRow.push("")
         }
         if (item.tags.reassigned?.toMe || item.tags.reassigned?.fromMe) {
           completedRow.push("X");
@@ -83,8 +105,8 @@ const App = (): JSX.Element => {
       if (item.tags.moved?.outOfIteration) {
         overallRow.push("X")
         movedOutRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-        movedOutRow.push(item.title.substring(0, 70))
-        movedOutRow.push("");   
+        movedOutRow.push(title)
+        movedOutRow.push("");
       } else {
         overallRow.push("")
       }
@@ -101,13 +123,13 @@ const App = (): JSX.Element => {
     setValue(
 `# Sprint summary for ${summary.iteration.name}
 
-## Completed:
+**Completed:**
 ${markdownTable(completedTable)}
 
-## Moved Out:
+**Moved Out:**
 ${markdownTable(movedOutTable)}
 
-## Detailed Breakdown
+**Detailed Breakdown**
 ${markdownTable(overallTable)}
 
 
@@ -117,8 +139,36 @@ ${markdownTable(overallTable)}
   };
 
   useEffect(() => {
+    if (loaded) {
+      return;
+    }
+
     chrome.runtime.onMessage.addListener(onMessage);
-  }, []);
+    setLoaded(true);
+  }, [loaded]);
+
+  useEffect(() => {
+    let newIterationId = searchParams.get('iteration')
+    if (iterationId !== newIterationId) {
+      setIterationId(newIterationId ?? undefined);
+      setGenerateRequestSent(false)
+    }
+  }, [iterationId, searchParams]);
+
+  useEffect(() => {
+    if (!iterationId || iterationId === null || generateRequestSent) {
+      return;
+    }
+
+    setValue(`**Generating summary...**`);
+    setGenerateRequestSent(true);
+
+    const action: GenerateIterationSummaryAction = {
+      action: 'GenerateIterationSummary',
+      iterationId: iterationId
+    }
+    chrome.runtime.sendMessage(action, (resp) => {});
+  }, [iterationId, generateRequestSent]);
 
   return (
     <>

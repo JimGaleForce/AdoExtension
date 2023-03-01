@@ -1,18 +1,19 @@
 import dayjs from "dayjs";
-import { Iteration } from "../../../models/adoApi";
+import { Iteration, WorkItemHistory } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../../models/adoSummary";
 import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
-import { CompletedParser, IterationTrackerParser, ReassignedParser } from "./parser";
+import { CompletedParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { TitleParser } from "./parser/TitleParser";
 
 const IterationSummaryParser: IterationItemParser[] = [
     TitleParser,
     ReassignedParser,
     CompletedParser,
-    IterationTrackerParser
+    IterationTrackerParser,
+    WorkItemTypeParser
 ]
 
 // Generates a proper ADO Summary for a given iteration
@@ -58,7 +59,13 @@ export async function SummaryForIteration(iterationId: string) {
 async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
-    const workItemHistory = await GetWorkItemHistory(config, workItemId);
+
+    let workItemHistory: WorkItemHistory;
+    try {
+        workItemHistory = await GetWorkItemHistory(config, workItemId);
+    } catch {
+        return null;
+    }
 
 
     if (workItemHistory.count === 0 || !workItemHistory.value[0].fields?.["System.AuthorizedDate"]?.newValue) {
