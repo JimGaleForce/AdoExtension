@@ -14,16 +14,6 @@ async function loadColors(failed = false) {
     if (typeof adoxData.isHighlight != 'boolean') {
       adoxData.isHighlight = true;
     }
-
-    if (!firstLoaded) {
-      firstLoaded = true;
-      if (adoxData.searchText && adoxData.searchText.length > 0 && document.getElementsByClassName('search-input').length>0) {
-        var input = document.getElementsByClassName('search-input')[0].value;
-        if (typeof(input) === 'string' && input.length===0) {
-          document.getElementsByClassName('search-input')[0].value = adoxData.searchText;
-        }
-      }
-    }
   } catch {
     failed = true;
   }
@@ -125,6 +115,11 @@ async function highLine() {
 
   // get the search text from the search box
   var wordset = document.getElementsByClassName('search-input')[0].value.toLowerCase();
+
+  // If no text in search box, fall back to config's search text
+  if (wordset.length === 0) {
+    wordset = adoxData.searchText.toLowerCase();
+  }
 
   // if nothing to search, nothing to do
   if (wordset.length === 0) {
