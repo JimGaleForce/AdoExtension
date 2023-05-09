@@ -1,9 +1,29 @@
 import { BatchWorkItems, Iteration, IterationWorkItems, ListIteration, WorkItem, WorkItemHistory } from "../../models/adoApi";
 import { AdoConfigData } from "../../models/adoConfig";
 
+
+async function fetchWithTimeout(url: string, timeout: number = 10000) {
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  // Set a timeout of 10 seconds
+  const timeoutId = setTimeout(() => {
+    controller.abort(); // Abort the fetch request
+    console.log('Request timed out');
+  }, timeout);
+  
+  const response = await fetch(url, {
+    signal: controller.signal  
+  });
+
+  clearTimeout(timeoutId);
+
+  return response;
+}
+
 async function fetchWithAuth(url: string, retry: number = 0): Promise<any> {
   try {
-    const response = await fetch(url);
+    const response = await fetchWithTimeout(url);
     const data = await response.json();
     return data;
   } catch (error) {
