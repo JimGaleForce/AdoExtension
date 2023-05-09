@@ -1,6 +1,47 @@
 import { BatchWorkItems, Iteration, IterationWorkItems, ListIteration, WorkItem, WorkItemHistory } from "../../models/adoApi";
 import { AdoConfigData } from "../../models/adoConfig";
 
+async function fetchWithAuth(url: string, retry: number = 0): Promise<any> {
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof SyntaxError && retry < 3) {
+      console.error(`JSON Parse error. Attempting to authenticate. Retry ${retry + 1} / 3`);
+      // JSON parse error indicates unauthenticated request
+      await authenticate(url);
+      return fetchWithAuth(url, retry + 1);
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function authenticate(url: string): Promise<void> {
+    // Open a new tab in the background
+    const tab = await chrome.tabs.create({
+      url: url,
+      active: false,
+    });
+  
+    // Wait for the tab to fully load
+    await new Promise<void>((resolve) => {
+      chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+        if (tabId === tab.id && changeInfo.status === "complete") {
+          // Remove the listener and resolve the promise
+          chrome.tabs.onUpdated.removeListener(listener);
+          resolve();
+        }
+      });
+    });
+  
+    // Close the tab
+    if (tab.id) {
+        await chrome.tabs.remove(tab.id);
+    }
+  }
+
 export async function GetIterations(
     config: AdoConfigData,
     onlyCurrentIteration = false): Promise<ListIteration> {
@@ -10,7 +51,7 @@ export async function GetIterations(
     let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations`;
     if (onlyCurrentIteration) { url += "/?$timeframe=current" };
 
-    const json = await fetch(url).then((response) => response.json());
+    const json = await fetchWithAuth(url);
 
     // If we get an error (i.e. Work item does not exist)
     if (json.message) {
@@ -45,7 +86,7 @@ export async function GetIteration(config: AdoConfigData, iterationId: string): 
     const { organization } = config;
     let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}?api-version=7.0`;
 
-    const json = await fetch(url).then((response) => response.json());
+    const json = await fetchWithAuth(url);
     
     // If we get an error (i.e. Work item does not exist)
     if (json.message) {
@@ -88,7 +129,7 @@ export async function GetItemsFromIteration(
 
     const url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}/workitems?api-version=7.0`
 
-    const json = await fetch(url).then((response) => response.json());
+    const json = await fetchWithAuth(url);
     
     // If we get an error (i.e. Work item does not exist)
     if (json.message) {
@@ -141,7 +182,7 @@ export async function GetWorkItemHistory(config: AdoConfigData, workItemId: numb
     const { organization } = config;
     const url = `https://dev.azure.com/${organization}/_apis/wit/workItems/${workItemId}/updates?api-version=7.0`
 
-    const json = await fetch(url).then((response) => response.json());
+    const json = await fetchWithAuth(url);
 
     // If we get an error (i.e. Work item does not exist)
     if (json.message) {
@@ -160,7 +201,7 @@ export async function GetWorkItem(config: AdoConfigData, workItemId: number, asO
     const { organization } = config;
     const url = `https://dev.azure.com/${organization}/${project}/_apis/wit/workitems/${workItemId}?api-version=7.0${asOf ? `&asOf=${asOf}` : ""}`
 
-    const json = await fetch(url).then((response) => response.json());
+    const json = await fetchWithAuth(url);
 
     // If we get an error (i.e. Work item does not exist at the specified datetime)
     if (json.message) {
