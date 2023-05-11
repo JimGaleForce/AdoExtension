@@ -33,11 +33,11 @@ const App = (): JSX.Element => {
     ]
 
     let completedTable: string[][] = [
-      ['ID', 'Title', 'Moved In', 'Reassigned', 'Notes']
+      ['ID', 'Title', 'Moved In', 'Reassigned', 'Time Spent', 'Notes']
     ]
 
     let movedOutTable: string[][] = [
-      ['ID', 'Title', 'Notes']
+      ['ID', 'Title', 'Time Spent', 'Time Added', 'Time Left', 'Notes']
     ]
 
     for (let item of summary.workItems) {
@@ -79,6 +79,9 @@ const App = (): JSX.Element => {
         } else {
           completedRow.push("");
         }
+        if (item.tags.capacity) {
+          completedRow.push(`${item.tags.capacity.timeRemoved}`);
+        }
       } else {
         overallRow.push("")
       }
@@ -106,6 +109,16 @@ const App = (): JSX.Element => {
         overallRow.push("X")
         movedOutRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
         movedOutRow.push(title)
+        
+        if (item.tags.capacity) {
+          movedOutRow.push(`${item.tags.capacity.timeRemoved}`);
+          movedOutRow.push(`${item.tags.capacity.timeAdded}`);
+          movedOutRow.push(`${item.tags.capacity.timeLeft}`);
+        } else {
+          movedOutRow.push("?");
+          movedOutRow.push("?");
+          movedOutRow.push("?");
+        }
         movedOutRow.push("");
       } else {
         overallRow.push("")

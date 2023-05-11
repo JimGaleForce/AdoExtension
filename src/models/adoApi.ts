@@ -87,6 +87,10 @@ export type WorkItemFields = {
     "System.CommentCount": number
     "System.Title": string
     "System.IsDeleted": boolean
+
+    "Microsoft.VSTS.Scheduling.OriginalEstimate"?: number
+    "OSG.RemainingDays"?: number
+    "OSG.Cost"?: number
 }
 
 export type WorkItem = {
@@ -172,6 +176,10 @@ export type WorkItemHistoryEvent = {
         "System.Description"?: FieldUpdateDelta<string>
         "System.Title"?: FieldUpdateDelta<string>
         "OSG.Tenets.ComplianceAssessmentState"?: FieldUpdateDelta<string>
+
+        "Microsoft.VSTS.Scheduling.OriginalEstimate"?: FieldUpdateDelta<number>
+        "OSG.RemainingDays"?: FieldUpdateDelta<number>
+        "OSG.Cost"?: FieldUpdateDelta<number>
     }
     relations?: {
         added?: Relation

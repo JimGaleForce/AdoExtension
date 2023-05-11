@@ -7,13 +7,15 @@ import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { TitleParser } from "./parser/TitleParser";
+import { CapacityParser } from "./parser/CapacityParser";
 
 const IterationSummaryParser: IterationItemParser[] = [
     TitleParser,
     ReassignedParser,
     CompletedParser,
     IterationTrackerParser,
-    WorkItemTypeParser
+    WorkItemTypeParser,
+    CapacityParser
 ]
 
 // Generates a proper ADO Summary for a given iteration
