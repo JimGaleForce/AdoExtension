@@ -1,7 +1,7 @@
 import { GetItemsFromIteration, GetIterations } from "./ado/api";
 import { SummaryForIteration } from "./ado/summary";
 import { isBGAction } from "./models/actions";
-import { loadConfig, isValidConfig } from "./models/adoConfig";
+import { loadConfig, isValidConfig, initializeConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
 
@@ -95,4 +95,5 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 });
 
-loadLatestIteration();
+initializeConfig()
+  .then(() => loadLatestIteration());

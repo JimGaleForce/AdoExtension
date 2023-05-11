@@ -1,6 +1,7 @@
 import { GetCurrentIteration } from "../ado/api"
 
 export type AdoConfigData = {
+    configInitialized: boolean,
     searchText: string
     colors: string[]
     email: string
@@ -12,6 +13,7 @@ export type AdoConfigData = {
 }
 
 export const baseConfig: AdoConfigData = {
+    configInitialized: false,
     searchText: "Completed|Resolved|Closed,Proposed|Consider,Committed|Active|Bug Understood,Started|Under Development",
     colors: [
         '#ccFFcc',
@@ -62,4 +64,14 @@ export async function isValidConfig(): Promise<boolean> {
         return false
     }
     return true;
+}
+
+// We want to ensure that there is a valid set of configuration options
+// saved in the extension. Partly due to interopability issues with native JS
+// files that are unable to utilize the `loadConfig` method. 
+export async function initializeConfig(): Promise<void> {
+    const config = await loadConfig();
+    if (config.configInitialized !== true) {
+        saveConfig({...config, configInitialized: true});
+    }
 }
