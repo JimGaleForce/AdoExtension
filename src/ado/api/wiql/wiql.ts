@@ -78,6 +78,9 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
     }
 
     condition(field: T, operator: Operator, value: string | number | string[] | number[], conjunction?: Conjunction): this {
+        if (this._conditions.length === 0 && conjunction && conjunction !== "EVER") {
+            throw new Error("Conjunction (AND/OR) must not be specified for the first condition.");
+        }
         this._conditions.push({ field, operator, value, conjunction });
         return this;
     }
@@ -109,7 +112,6 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
     orEver(field: T, operator: Operator, value: string | number | string[] | number[]): this {
         return this.condition(field, operator, value, "OR EVER");
     }
-    // Additional ever, andEver, orEver methods can be added in a similar fashion
 
     group(conditions: (builder: WiqlQueryBuilder<T>) => void, conjunction?: Conjunction): this {
         if (this._conditions.length > 0 && !conjunction) {
@@ -122,6 +124,14 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
         conditions(groupBuilder);
         this._conditions.push({ subConditions: groupBuilder._conditions, conjunction });
         return this;
+    }
+    
+    andGroup(conditions: (builder: WiqlQueryBuilder<T>) => void): this {
+        return this.group(conditions, "AND");
+    }
+
+    orGroup(conditions: (builder: WiqlQueryBuilder<T>) => void): this {
+        return this.group(conditions, "OR");
     }
 
     buildConditionString(condition: ConditionObject<T>): string {
