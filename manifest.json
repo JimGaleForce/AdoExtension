@@ -49,6 +49,7 @@
         "src/ado/main.ts"
       ],
       "matches": [
+        "*://*.visualstudio.com/*/_sprints",
         "*://*.visualstudio.com/*/_sprints/*"
       ],
       "run_at": "document_idle"
