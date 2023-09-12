@@ -40,14 +40,15 @@ export async function SummaryForDateRange(startDate: Date, endDate: Date) {
     }
 
     // Grab Epics and KR's from date range, and work our way down
-    const krWiqlBuilder = WiqlQueryBuilder.createWiql<WorkItemFields>("workitems");
-    const query = krWiqlBuilder
-        .select("System.Title", "System.ChangedDate", "System.AreaPath", "System.AssignedTo", "System.Id")
-        .where("System.ChangedDate", ">=", dayjs(startDate).format("MM/DD/YYYY"))
-        .and("System.AreaPath", '=', "Edge\\Growth\\Feedback and Diagnostics")
-        .and("System.AssignedTo", '=', Macro.CurrentUser)
-        .and("System.AssignedTo", 'IN', [Macro.CurrentUser, "foo"])
-        .and("System.Id", '=', 45841727)
+    const query = WiqlQueryBuilder
+        .select("System.ChangedDate", "System.AreaPath", "System.AssignedTo", "System.Id", "System.IterationPath")
+        .from("workitems")
+        .where("System.AreaPath", '=', "Edge\\Growth\\Feedback and Diagnostics")
+        .and("System.AssignedTo", '<>', Macro.CurrentUser)
+        .andGroup(builder => {
+         builder
+            .ever("System.AssignedTo", "=", Macro.CurrentUser)   
+        });
         ;
 
     console.log("Query:");

@@ -86,9 +86,8 @@ export async function post(url: string, body: any, timeout: number = 10000): Pro
 export async function postWithAuth(url: string, body: any, retry: number = 0): Promise<any> {
   try {
     const response = await post(url, body);
-    console.log(response);
-    console.log({...response});
     if (!response.ok) {
+      console.error(await response.json());
       throw new Error("Error posting to ADO");
     }
     const data = await response.json();
