@@ -45,10 +45,11 @@ export async function SummaryForDateRange(startDate: Date, endDate: Date) {
         .from("workitems")
         .where("System.AreaPath", '=', "Edge\\Growth\\Feedback and Diagnostics")
         .and("System.AssignedTo", '<>', Macro.CurrentUser)
-        .andGroup(builder => {
-         builder
-            .ever("System.AssignedTo", "=", Macro.CurrentUser)   
-        });
+        .group(builder => {
+            builder
+                .ever("System.AssignedTo", "=", Macro.CurrentUser)
+        }, 'OR')
+        .andEver("System.AssignedTo", "=", Macro.CurrentUser);
         ;
 
     console.log("Query:");

@@ -49,41 +49,20 @@ const valueToQueryString = (value: string | number | string[] | number[]): strin
 }
 
 type From = "workitems" | "workitemLinks";
+type Conjunction = "AND" | "OR" | "EVER" | "AND EVER" | "OR EVER";
+
+type ConditionObject<T extends keyof WorkItemFields> = {
+    field?: T;
+    operator?: Operator;
+    value?: string | number | string[] | number[];
+    conjunction?:  Conjunction;
+    subConditions?: ConditionObject<T>[];
+};
 
 export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
     private _selectFields: T[];
-    private _conditions: string[] = [];
+    private _conditions: ConditionObject<T>[] = [];
     private _from?: From;
-
-    private createCondition(field: T, operator: Operator, value: any, prefix?: string): string {
-        const condition = `[${String(field)}] ${operator} ${valueToQueryString(value)}`;
-        if (prefix) {
-            return `${prefix} ${condition}`;
-        }
-        return condition;
-    }
-    
-    private appendCondition(condition: string, conjunction?: string): this {
-        if (conjunction) {
-            if ((conjunction === 'AND' || conjunction === 'OR') && this._conditions.length === 0) {
-                throw new Error(`Cannot use ${conjunction} before WHERE`);
-            }
-            this._conditions.push(`${conjunction} ${condition}`);
-        } else {
-            this._conditions.push(condition);
-        }
-        return this;
-    }
-
-    private group(callback: (builder: WiqlQueryBuilder<T>) => void, conjunction?: string): this {
-        const groupedBuilder = new WiqlQueryBuilder<T>([]);
-        callback(groupedBuilder);
-        if (groupedBuilder._conditions.length > 0) {
-            const condition = `(${groupedBuilder._conditions.join(" ")})`;
-            this.appendCondition(condition, conjunction);
-        }
-        return this;
-    }
 
     constructor(selectFields: T[]) {
         this._selectFields = selectFields;
@@ -98,36 +77,58 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
         return this;
     }
 
-    where(field: T, operator: Operator, value: any): this {
-        return this.appendCondition(this.createCondition(field, operator, value));
+    condition(field: T, operator: Operator, value: string | number | string[] | number[], conjunction?: Conjunction): this {
+        this._conditions.push({ field, operator, value, conjunction });
+        return this;
     }
 
-    and(field: T, operator: Operator, value: any): this {
-        return this.appendCondition(this.createCondition(field, operator, value), 'AND');
+    where(field: T, operator: Operator, value: string | number | string[] | number[]): this {
+        return this.condition(field, operator, value);
     }
 
-    or(field: T, operator: Operator, value: any): this {
-        return this.appendCondition(this.createCondition(field, operator, value), 'OR');
+    and(field: T, operator: Operator, value: string | number | string[] | number[]): this {
+        return this.condition(field, operator, value, "AND");
     }
 
-    ever(field: T, operator: Operator, value: any): this {
-        return this.appendCondition(this.createCondition(field, operator, value, 'EVER'));
+    or(field: T, operator: Operator, value: string | number | string[] | number[]): this {
+        return this.condition(field, operator, value, "OR");
     }
 
-    andEver(field: T, operator: Operator, value: any): this {
-        return this.appendCondition(this.createCondition(field, operator, value, 'EVER'), 'AND');
+    ever(field: T, operator: Operator, value: string | number | string[] | number[]): this {
+        // Check if conditions already exist, if so, throw an error
+        if (this._conditions.length > 0) {
+            throw new Error("Cannot use EVER after other conditions. Use at the beginning of query/group, or use AND/OR EVER");
+        }
+        return this.condition(field, operator, value, "EVER");
+    }
+    
+    andEver(field: T, operator: Operator, value: string | number | string[] | number[]): this {
+        return this.condition(field, operator, value, "AND EVER");
+    }
+    
+    orEver(field: T, operator: Operator, value: string | number | string[] | number[]): this {
+        return this.condition(field, operator, value, "OR EVER");
+    }
+    // Additional ever, andEver, orEver methods can be added in a similar fashion
+
+    group(conditions: (builder: WiqlQueryBuilder<T>) => void, conjunction?: Conjunction): this {
+        const groupBuilder = new WiqlQueryBuilder<T>([]);
+        conditions(groupBuilder);
+        this._conditions.push({ subConditions: groupBuilder._conditions, conjunction });
+        return this;
     }
 
-    orEver(field: T, operator: Operator, value: any): this {
-        return this.appendCondition(this.createCondition(field, operator, value, 'EVER'), 'OR');
-    }
+    buildConditionString(condition: ConditionObject<T>): string {
+        if (condition.subConditions) {
+            const groupConditions = condition.subConditions.map(c => this.buildConditionString(c)).join(" ");
+            return condition.conjunction ? `${condition.conjunction} (${groupConditions})` : `(${groupConditions})`;
+        }
 
-    andGroup(callback: (builder: WiqlQueryBuilder<T>) => void): this {
-        return this.group(callback, 'AND');
-    }
+        if (condition.field && condition.operator && condition.value) {
+            return `${condition.conjunction ? condition.conjunction + " " : ""}[${String(condition.field)}] ${condition.operator} ${valueToQueryString(condition.value)}`;
+        }
 
-    orGroup(callback: (builder: WiqlQueryBuilder<T>) => void): this {
-        return this.group(callback, 'OR');
+        return "";
     }
 
     buildQuery(): string {
@@ -140,10 +141,10 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
         if (this._conditions.length === 0) {
             throw new Error("No conditions specified");
         }
-        
-        return `SELECT ${this._selectFields.map(f => `[${String(f)}]`).join(", ")} FROM ${this._from} WHERE (${this._conditions.join(" ")})`;
-    }
 
+        const conditionString = this._conditions.map(c => this.buildConditionString(c)).join(" ");
+        return `SELECT ${this._selectFields.map(f => `[${String(f)}]`).join(", ")} FROM ${this._from} WHERE ${conditionString}`;
+    }
 
     async execute(config: AdoConfigData): Promise<Array<Pick<WorkItemFields, T>>> {
         const project = ExtractProject(config);
