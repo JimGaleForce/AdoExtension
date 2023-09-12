@@ -1,11 +1,6 @@
-import { ItemParser, ItemSummary } from ".";
+import { ItemParser, ItemSummary } from "./item";
 import { Iteration } from "../adoApi";
 import { WorkItemTags } from "../ItemTag";
-
-export type IterationSummary = {
-    iteration: Iteration
-    workItemSummaries: ItemSummary<WorkItemTags>[]
-}
 
 export type IterationParserExtraData = {
     iteration: Iteration
@@ -19,3 +14,8 @@ export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promis
 }
 
 export type IterationItemParser = ItemParser<WorkItemTags, IterationParserExtraData>
+
+export interface IterationSummary {
+    iteration: Iteration
+    workItems: ItemSummary<WorkItemTags>[]
+}

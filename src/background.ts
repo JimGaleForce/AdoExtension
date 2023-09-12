@@ -1,5 +1,5 @@
 import { GetItemsFromIteration, GetIterations } from "./ado/api";
-import { SummaryForIteration } from "./ado/summary";
+import { SummaryForDateRange, SummaryForIteration } from "./ado/summary";
 import { isBGAction } from "./models/actions";
 import { loadConfig, isValidConfig, initializeConfig } from "./models/adoConfig";
 
@@ -96,4 +96,5 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 });
 
 initializeConfig()
-  .then(() => loadLatestIteration());
+  .then(() => SummaryForDateRange(new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 2), new Date()));
+  // .then(() => loadLatestIteration());

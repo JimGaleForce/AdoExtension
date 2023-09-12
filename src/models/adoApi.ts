@@ -54,7 +54,25 @@ export type IterationWorkItems = {
     }
 }
 
-export type WorkItemState = "Committed" | "Completed" | "Cut" | "Proposed" | "Started" | "Resolved" | "Closed"
+export type WorkItemState = 
+    | "Committed"
+    | "Completed"
+    | "Cut"
+    | "Proposed"
+    | "Started"
+    | "Removed"
+    | "Resolved"
+    | "Closed"
+
+export type WorkItemType =
+    | "Bug"
+    | "Deliverable"
+    | "Epic"
+    | "Experiment"
+    | "Feature"
+    | "Key Result"
+    | "Scenario"
+    | "Task"
 
 export type AdoUser = {
     displayName: string
@@ -70,12 +88,13 @@ export type AdoUser = {
 
 export type WorkItemFields = {
     // Catch all as there can always be custom fields
-    [key: string]: unknown
+    // [key: string]: unknown
 
+    "System.Id": number
     "System.AreaPath": string
     "System.TeamProject": string
     "System.IterationPath": string
-    "System.WorkItemType": string
+    "System.WorkItemType": WorkItemType | string
     "System.State": WorkItemState | string // different orgs might have different states
     "System.Reason": string
     "System.AssignedTo": AdoUser
