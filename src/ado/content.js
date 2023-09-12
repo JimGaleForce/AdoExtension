@@ -88,10 +88,10 @@ async function highLine() {
   const colors = ['adox-line-1', 'adox-line-2', 'adox-line-3', 'adox-line-4', 'adox-line-5'];
 
   // get rows from backlog, or tiles from taskboard
-  let cellClass = 'grid-cell';
-  var rows = document.getElementsByClassName('grid-row');
+  let cellClass = 'bolt-list-cell';
+  var rows = document.getElementsByClassName('bolt-list-row');
   if (rows.length === 0) {
-    rows = document.getElementsByClassName('tbTileContent');
+    rows = document.getElementsByClassName('taskboard-card');
     if (rows.length > 0) {
       cellClass = 'field-container';
     }

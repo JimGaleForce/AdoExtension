@@ -11,6 +11,24 @@ export * from './CapacityTag'
 export * from './CompletedTag'
 export * from './IterationTrackerTag'
 
+export type KRItemTags =
+& WorkItemTypeTag
+
+export type EpicItemTags =
+& WorkItemTypeTag
+
+export type ScenarioItemTags =
+& CapacityTag
+& CompletedTag
+& ReassignedTag
+& WorkItemTypeTag
+
+export type DeliverableItemTags =
+& CapacityTag
+& CompletedTag
+& ReassignedTag
+& WorkItemTypeTag
+
 export type WorkItemTags =
 & BugTag
 & CapacityTag

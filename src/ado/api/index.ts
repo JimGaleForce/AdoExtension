@@ -62,6 +62,49 @@ async function authenticate(url: string): Promise<void> {
     }
   }
 
+export async function post(url: string, body: any, timeout: number = 10000): Promise<Response> {
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  // Set a timeout of 10 seconds
+  const timeoutId = setTimeout(() => {
+    controller.abort(); // Abort the fetch request
+    console.log('Request timed out');
+  }, timeout);
+  
+    const response = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal  
+    });
+
+    clearTimeout(timeoutId);
+    return response;
+}
+
+export async function postWithAuth(url: string, body: any, retry: number = 0): Promise<any> {
+  try {
+    const response = await post(url, body);
+    console.log(response);
+    console.log({...response});
+    if (!response.ok) {
+      throw new Error("Error posting to ADO");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof SyntaxError && retry < 3) {
+      console.error(`JSON Parse error. Attempting to authenticate. Retry ${retry + 1} / 3`);
+      // JSON parse error indicates unauthenticated request
+      await authenticate(url);
+      return postWithAuth(url, body, retry + 1);
+    } else {
+      throw error;
+    }
+  }
+}
+
 export async function GetIterations(
     config: AdoConfigData,
     onlyCurrentIteration = false): Promise<ListIteration> {

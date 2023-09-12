@@ -7,7 +7,10 @@ type Iteration = {
 }
 
 const getSelectedIteration: () => Iteration = () => {
-  return dataProviders.data["ms.vss-work-web.sprints-hub-content-header-data-provider"].selectedIteration
+  return {
+    id: dataProviders.data["ms.vss-work-web.new-sprints-hub-taskboard-data-provider"].iterationId,
+    friendlyPath: dataProviders.data["ms.vss-work-web.new-sprints-hub-taskboard-data-provider"].iterationPath
+  };
 }
 
 async function createSummary() {
@@ -29,7 +32,7 @@ async function addGenerateButton() {
   generateButton.onclick = createSummary;
 
   //TODO: check that we're on an iteration view first
-  let topBar = document.getElementsByClassName("vss-HubTileRegion")[0];
+  let topBar = document.getElementsByClassName("sprints-tabbar-header-commandbar")[1];
   if (topBar) {
     topBar.prepend(generateButton);
   } else {

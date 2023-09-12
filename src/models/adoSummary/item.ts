@@ -1,4 +1,5 @@
-import { WorkItem } from "../adoApi"
+import { WorkItem, WorkItemHistoryEvent } from "../adoApi"
+import { AdoConfigData } from "../adoConfig"
 import { BaseTag } from "../ItemTag"
 
 export type ItemSummary<T extends BaseTag> = { 
@@ -7,4 +8,4 @@ export type ItemSummary<T extends BaseTag> = {
     tags: T
 }
 
-export type ItemParser<T extends BaseTag> = (item: WorkItem, tags: T) => Promise<void>;
+export type ItemParser<T extends BaseTag, U extends {}> = (config: AdoConfigData, workItem: WorkItem, workItemHistoryEvents: WorkItemHistoryEvent[], tags: Partial<T>, extra: U) => Promise<Partial<T>>;
