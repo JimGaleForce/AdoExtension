@@ -49,7 +49,6 @@ export async function SummaryForDateRange(startDate: Date, endDate: Date) {
             builder
                 .ever("System.AssignedTo", "=", Macro.CurrentUser)
         }, 'AND')
-        .andEver("System.AssignedTo", "=", Macro.CurrentUser);
         ;
 
     console.log("Query:");

@@ -170,9 +170,9 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
 // .where("System.AreaPath", '=', "Edge\\Growth\\Feedback and Diagnostics")
 // .and("System.AssignedTo", '<>', Macro.CurrentUser)
 // .group(builder => {
-//  builder
-//     .ever("System.AssignedTo", "=", Macro.CurrentUser)   
-// })
+//     builder
+//         .ever("System.AssignedTo", "=", Macro.CurrentUser)
+// }, 'AND')
 // .buildQuery() // Optional, but useful for debugging
 // .execute(config) // Will build and execute the query
 // ;
