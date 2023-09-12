@@ -112,6 +112,12 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields> {
     // Additional ever, andEver, orEver methods can be added in a similar fashion
 
     group(conditions: (builder: WiqlQueryBuilder<T>) => void, conjunction?: Conjunction): this {
+        if (this._conditions.length > 0 && !conjunction) {
+            throw new Error("Conjunction (AND/OR) must be specified for groups after the first condition.");
+        }
+        else if (this._conditions.length == 0 && conjunction) {
+            throw new Error("Conjunction (AND/OR) must not be specified for groups during the first condition.");
+        }
         const groupBuilder = new WiqlQueryBuilder<T>([]);
         conditions(groupBuilder);
         this._conditions.push({ subConditions: groupBuilder._conditions, conjunction });

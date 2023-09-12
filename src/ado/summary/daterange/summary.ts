@@ -48,7 +48,7 @@ export async function SummaryForDateRange(startDate: Date, endDate: Date) {
         .group(builder => {
             builder
                 .ever("System.AssignedTo", "=", Macro.CurrentUser)
-        }, 'OR')
+        }, 'AND')
         .andEver("System.AssignedTo", "=", Macro.CurrentUser);
         ;
 
