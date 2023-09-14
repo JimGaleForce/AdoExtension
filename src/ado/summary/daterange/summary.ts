@@ -39,7 +39,6 @@ export async function SummaryForDateRange(startDate: Date, endDate: Date) {
         summary: {}
     }
 
-    // Grab Epics and KR's from date range, and work our way down
     const query = WiqlQueryBuilder
         .select("System.ChangedDate", "System.AreaPath", "System.AssignedTo", "System.Id", "System.IterationPath")
         .from("workitems")

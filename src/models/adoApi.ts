@@ -4,6 +4,13 @@ export type Href = {
     href: string
 }
 
+export type IterationFromURL = {
+    organization: string
+    project: string
+    team: string
+    iteration: string
+}
+
 export type Iteration = {
     id: string
     name: string

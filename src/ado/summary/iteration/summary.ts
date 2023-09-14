@@ -1,13 +1,14 @@
 import dayjs from "dayjs";
 import { Iteration, WorkItemHistory } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
-import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../../models/adoSummary";
+import { GetWorkItemsFromStorageByIteration, IterationSummary } from "../../../models/adoSummary";
 import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { TitleParser } from "./parser/TitleParser";
 import { CapacityParser } from "./parser/CapacityParser";
+import { ItemSummary } from "../../../models/adoSummary/item";
 
 const IterationSummaryParser: IterationItemParser[] = [
     TitleParser,

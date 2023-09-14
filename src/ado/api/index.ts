@@ -1,4 +1,4 @@
-import { BatchWorkItems, Iteration, IterationWorkItems, ListIteration, WorkItem, WorkItemHistory } from "../../models/adoApi";
+import { BatchWorkItems, Iteration, IterationFromURL, IterationWorkItems, ListIteration, WorkItem, WorkItemHistory } from "../../models/adoApi";
 import { AdoConfigData } from "../../models/adoConfig";
 
 
@@ -140,6 +140,25 @@ export async function getIterationsX(root: string, callback: any) {
     const url = root + "/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1";
     await httpGetAsyncX(callback, url);
     //https://microsoft.visualstudio.com/Edge/Feedback%20and%20Diagnostics/_apis/work/teamsettings/iterations?$expand=workItems&api-version=6.1-preview.1
+}
+
+export async function GetIterationFromURL(data: IterationFromURL): Promise<Iteration | undefined> {
+  const {organization, project, team, iteration} = data;
+  let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/?api-version=7.0`;
+
+  const json = await fetchWithAuth(url);
+  
+  // If we get an error (i.e. Work item does not exist)
+  if (json.message) {
+      console.error(`Error getting iteration ${iteration}`)
+      throw new Error(json.message);
+  }
+
+  const iterations = json as ListIteration;
+
+  const iterationObj = iterations.value.find((i) => i.name === iteration);
+  console.log(iterationObj);
+  return iterationObj;
 }
 
 export async function GetIteration(config: AdoConfigData, iterationId: string): Promise<Iteration> {

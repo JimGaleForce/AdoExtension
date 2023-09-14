@@ -5,7 +5,7 @@ import { BaseTag } from "../ItemTag"
 export type ItemSummary<T extends BaseTag> = { 
     id: number
     title: string
-    tags: T
+    tags: Partial<T>
 }
 
 export type ItemParser<T extends BaseTag, U extends {}> = (config: AdoConfigData, workItem: WorkItem, workItemHistoryEvents: WorkItemHistoryEvent[], tags: Partial<T>, extra: U) => Promise<Partial<T>>;

@@ -1,4 +1,4 @@
-import { GetItemsFromIteration, GetIterations } from "./ado/api";
+import { GetItemsFromIteration, GetIterationFromURL, GetIterations } from "./ado/api";
 import { SummaryForDateRange, SummaryForIteration } from "./ado/summary";
 import { isBGAction } from "./models/actions";
 import { loadConfig, isValidConfig, initializeConfig } from "./models/adoConfig";
@@ -79,9 +79,19 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       return;
     }
 
+    // Get iteration
+    const iteration = await GetIterationFromURL(message.iteration);
+
+    if (iteration === undefined) {
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab.id, { error: 'Unable to get iteration information' })
+      } 
+      return;
+    }
+
     await chrome.tabs.create({
       active: true,
-      url: `src/pages/summary/index.html?iteration=${message.iteration.id}`
+      url: `src/pages/summary/index.html?iteration=${iteration.id}`
     });
       break;
     case 'GenerateIterationSummary':

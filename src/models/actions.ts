@@ -1,8 +1,8 @@
-import { Iteration } from "./adoApi"
+import { IterationFromURL } from "./adoApi"
 
 export type OpenIterationSummaryAction = {
     action: 'OpenIterationSummary'
-    iteration: Iteration
+    iteration: IterationFromURL
 }
 
 export type GenerateIterationSummaryAction = {
