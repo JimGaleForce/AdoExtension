@@ -4,6 +4,26 @@ export type Href = {
     href: string
 }
 
+export type TeamFieldValues = {
+    field: {
+        referenceName: string
+        url: string
+    },
+    defaultValue: string
+    values: {
+        value: string
+        includeChildren: boolean   
+    }[],
+    url: string,
+    links: {
+        self: Href,
+        project: Href,
+        team: Href,
+        teamSettings: Href,
+        areaPathClassificationNodes: Href
+    }
+}
+
 export type IterationFromURL = {
     organization: string
     project: string
@@ -39,6 +59,26 @@ export type ListIteration = {
     value: Iteration[]
 }
 
+export type WiqlQueryType = "workitems" | "workitemLinks";
+export type WorkItemsResult = {
+    asOf: string,
+    columns: {
+        referenceName: string,
+        name: string,
+        url: string
+    }[],
+    queryResultType: WiqlQueryType,
+    queryType: string,
+    workItems: WorkItemResult[]
+}
+
+export type WorkItemResult = {
+    id: string,
+    url: string
+}
+
+export type WorkItemLinksResult = {
+}
 
 export type WorkItemRelation = {
     rel: undefined | null | string
@@ -115,14 +155,16 @@ export type WorkItemFields = {
     "System.IsDeleted": boolean
 
     "Microsoft.VSTS.Scheduling.OriginalEstimate"?: number
+    "Microsoft.VSTS.Scheduling.RemainingWork"?: number
     "OSG.RemainingDays"?: number
+    "OSG.RemainingDevDays"?: number
     "OSG.Cost"?: number
 }
 
-export type WorkItem = {
+export type WorkItem<T extends keyof WorkItemFields = keyof WorkItemFields> = {
     id: number
     rev: number
-    fields: WorkItemFields
+    fields: Pick<WorkItemFields, T>
     _links: {
         self?: Href
         workItemUpdates?: Href

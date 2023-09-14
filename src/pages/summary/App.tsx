@@ -10,6 +10,7 @@ import { GenerateIterationSummaryAction } from "../../models/actions";
 
 const App = (): JSX.Element => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [team, setTeam] = useState<string>()
   const [iterationId, setIterationId] = useState<string>()
   const [value, setValue] = useState("**No iteration specified; Waiting...**");
   const [loaded, setLoaded] = useState<boolean>()
@@ -166,10 +167,16 @@ ${markdownTable(overallTable)}
       setIterationId(newIterationId ?? undefined);
       setGenerateRequestSent(false)
     }
-  }, [iterationId, searchParams]);
+
+    let newTeam = searchParams.get('team')
+    if (team !== newTeam) {
+      setTeam(newTeam ?? undefined);
+      setGenerateRequestSent(false)
+    }
+  }, [team, iterationId, searchParams]);
 
   useEffect(() => {
-    if (!iterationId || iterationId === null || generateRequestSent) {
+    if (!team || team === null || !iterationId || iterationId === null || generateRequestSent) {
       return;
     }
 
@@ -178,10 +185,11 @@ ${markdownTable(overallTable)}
 
     const action: GenerateIterationSummaryAction = {
       action: 'GenerateIterationSummary',
-      iterationId: iterationId
+      iterationId: iterationId,
+      team: team
     }
     chrome.runtime.sendMessage(action, (resp) => {});
-  }, [iterationId, generateRequestSent]);
+  }, [team, iterationId, generateRequestSent]);
 
   return (
     <>

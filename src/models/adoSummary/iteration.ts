@@ -1,16 +1,41 @@
 import { ItemParser, ItemSummary } from "./item";
-import { Iteration } from "../adoApi";
+import { Iteration, WorkItemFields, WorkItemResult } from "../adoApi";
 import { WorkItemTags } from "../ItemTag";
+import { GetIteration, GetTeamValues } from "../../ado/api";
+import { WiqlQueryBuilder } from "../../ado/api/wiql/wiql";
+import { loadConfig } from "../adoConfig";
 
 export type IterationParserExtraData = {
     iteration: Iteration
 }
 
-export const GetWorkItemsFromStorageByIteration: (iterationId: string) => Promise<number[]> = (iterationId: string) => {
-    return new Promise<number[]>(async (resolve) => {
-        const data = await chrome.storage.sync.get([iterationId]);
-        resolve(data[iterationId] ?? []);
-    }) 
+export async function LoadWorkItemsForIteration<T extends keyof WorkItemFields>(team: string, iterationId: string, fields: T[]): Promise<WorkItemResult[]> {
+    const config = await loadConfig();
+
+    console.log(`Getting iteration for team ${team} by id: ${iterationId}`);
+    const iteration = await GetIteration(config, iterationId);
+    console.log("Got iteration: ", iteration);
+    console.log("Getting team's area path");
+    const teamValues = await GetTeamValues(config, team);
+    console.log("Got team values: ", teamValues);
+
+    const query = WiqlQueryBuilder
+        .select("workitems", ["System.AreaPath", "System.IterationPath", "System.ChangedDate"])
+        .where("System.AreaPath", '=', teamValues.defaultValue)
+        .andEver("System.IterationPath", '=', iteration.path)
+        ;
+
+    console.log(query.buildQuery());
+    const result = await query.execute(config);
+
+    console.log("Got result: ", result);
+    return result.workItems
+
+    // console.log(`Parsing ${result.workItems.length} Items:`, result.workItems)
+    // const batchItems = await GetBatchItemDetails(config, result.workItems.map(i => i.id), fields);
+
+    // console.log("Result: ", batchItems);
+    // return batchItems;
 }
 
 export type IterationItemParser = ItemParser<WorkItemTags, IterationParserExtraData>

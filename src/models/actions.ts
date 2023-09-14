@@ -8,6 +8,7 @@ export type OpenIterationSummaryAction = {
 export type GenerateIterationSummaryAction = {
     action: 'GenerateIterationSummary'
     iterationId: string
+    team: string
 }
 
 export type BGAction =

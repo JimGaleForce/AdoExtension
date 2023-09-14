@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
-import { Iteration, WorkItemHistory } from "../../../models/adoApi";
+import { Iteration, WorkItem, WorkItemFields, WorkItemHistory } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
-import { GetWorkItemsFromStorageByIteration, IterationSummary } from "../../../models/adoSummary";
-import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
+import { IterationSummary } from "../../../models/adoSummary";
+import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
-import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
+import {  GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { TitleParser } from "./parser/TitleParser";
 import { CapacityParser } from "./parser/CapacityParser";
@@ -19,8 +19,24 @@ const IterationSummaryParser: IterationItemParser[] = [
     CapacityParser
 ]
 
-// Generates a proper ADO Summary for a given iteration
-export async function SummaryForIteration(iterationId: string) {
+const workItemFieldsOfInterest: Partial<keyof WorkItemFields>[] = [
+    "System.Id",
+    "System.Title",
+    "System.WorkItemType",
+    "Microsoft.VSTS.Scheduling.RemainingWork",
+    "System.AreaPath",
+    "System.IterationPath",
+    "System.State",
+    "System.Reason",
+    "System.AssignedTo",
+    "Microsoft.VSTS.Scheduling.OriginalEstimate",
+    "OSG.RemainingDevDays"
+];
+
+type WorkItemFieldTypes = typeof workItemFieldsOfInterest[number];
+
+// Generates a proper ADO Summary for a given team and iteration
+export async function SummaryForIteration(team: string, iterationId: string) {
     // Get all items from the specified iteration.
     // For each item:
     // - Get state of item as it was during the start of the specified iteration
@@ -33,9 +49,12 @@ export async function SummaryForIteration(iterationId: string) {
 
     const config = await loadConfig();
 
+    // Fields we're interested in:
+
+
     // First - get data about specified iteration (start date / end date)
     const iteration = await GetIteration(config, iterationId);
-    const workItemIds = await GetWorkItemsFromStorageByIteration(iterationId);
+    const workItems = await LoadWorkItemsForIteration(team, iterationId, workItemFieldsOfInterest);
 
     const { startDate, finishDate } = iteration.attributes;
 
@@ -47,8 +66,8 @@ export async function SummaryForIteration(iterationId: string) {
     // We could potentially do a map on `workItemIds` to proceess items
     // in parallel. This was not initially done due to concerns of hitting
     // API limits.
-    for (const workItemId of workItemIds) {
-        const itemSummary = await parseWorkItem(config, iteration, workItemId, startDate, finishDate);
+    for (const workItem of workItems) {
+        const itemSummary = await parseWorkItem(config, iteration, workItem.id, startDate, finishDate);
         if (itemSummary !== null) {
             summary.workItems.push(itemSummary);
         }
@@ -59,7 +78,7 @@ export async function SummaryForIteration(iterationId: string) {
     return summary;
 }
 
-async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
+async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: string, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
 

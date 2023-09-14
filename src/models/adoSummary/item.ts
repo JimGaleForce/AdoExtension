@@ -3,7 +3,7 @@ import { AdoConfigData } from "../adoConfig"
 import { BaseTag } from "../ItemTag"
 
 export type ItemSummary<T extends BaseTag> = { 
-    id: number
+    id: string
     title: string
     tags: Partial<T>
 }
