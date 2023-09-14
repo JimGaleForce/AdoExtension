@@ -9,7 +9,7 @@ export type IterationParserExtraData = {
     iteration: Iteration
 }
 
-export async function LoadWorkItemsForIteration<T extends keyof WorkItemFields>(team: string, iterationId: string, fields: T[]): Promise<WorkItemResult[]> {
+export async function LoadWorkItemsForIteration(team: string, iterationId: string): Promise<WorkItemResult[]> {
     const config = await loadConfig();
 
     console.log(`Getting iteration for team ${team} by id: ${iterationId}`);

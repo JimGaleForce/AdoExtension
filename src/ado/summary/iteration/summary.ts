@@ -19,21 +19,21 @@ const IterationSummaryParser: IterationItemParser[] = [
     CapacityParser
 ]
 
-const workItemFieldsOfInterest: Partial<keyof WorkItemFields>[] = [
-    "System.Id",
-    "System.Title",
-    "System.WorkItemType",
-    "Microsoft.VSTS.Scheduling.RemainingWork",
-    "System.AreaPath",
-    "System.IterationPath",
-    "System.State",
-    "System.Reason",
-    "System.AssignedTo",
-    "Microsoft.VSTS.Scheduling.OriginalEstimate",
-    "OSG.RemainingDevDays"
-];
+// const workItemFieldsOfInterest: Partial<keyof WorkItemFields>[] = [
+//     "System.Id",
+//     "System.Title",
+//     "System.WorkItemType",
+//     "Microsoft.VSTS.Scheduling.RemainingWork",
+//     "System.AreaPath",
+//     "System.IterationPath",
+//     "System.State",
+//     "System.Reason",
+//     "System.AssignedTo",
+//     "Microsoft.VSTS.Scheduling.OriginalEstimate",
+//     "OSG.RemainingDevDays"
+// ];
 
-type WorkItemFieldTypes = typeof workItemFieldsOfInterest[number];
+// type WorkItemFieldTypes = typeof workItemFieldsOfInterest[number];
 
 // Generates a proper ADO Summary for a given team and iteration
 export async function SummaryForIteration(team: string, iterationId: string) {
@@ -54,7 +54,7 @@ export async function SummaryForIteration(team: string, iterationId: string) {
 
     // First - get data about specified iteration (start date / end date)
     const iteration = await GetIteration(config, iterationId);
-    const workItems = await LoadWorkItemsForIteration(team, iterationId, workItemFieldsOfInterest);
+    const workItems = await LoadWorkItemsForIteration(team, iterationId);
 
     const { startDate, finishDate } = iteration.attributes;
 
