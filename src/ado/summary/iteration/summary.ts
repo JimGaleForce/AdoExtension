@@ -45,7 +45,7 @@ export async function SummaryForIteration(team: string, iterationId: string) {
 
     let summary: IterationSummary = {
         iteration: iteration,
-        workItems: [],
+        workItems: {},
         topDownMap: {}
     }
 
@@ -55,7 +55,7 @@ export async function SummaryForIteration(team: string, iterationId: string) {
     for (const workItem of workItems) {
         const itemSummary = await parseWorkItem(config, iteration, workItem.id, startDate, finishDate);
         if (itemSummary !== null) {
-            summary.workItems.push(itemSummary);
+            summary.workItems[itemSummary.id] = itemSummary;
         }
     }
 
@@ -119,8 +119,10 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
 
 const fields: (keyof WorkItemFields)[] = [
     "System.Id",
+    "System.Title",
     "System.WorkItemType",
     "System.AssignedTo",
+    "System.AreaPath",
     "System.Parent"
 ]
 
@@ -134,6 +136,7 @@ async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof Wo
     if (parentIds.length > 0) {
         console.log("Getting parents of these items");
         parsedParents = await GetBatchItemDetails(config, parentIds, fields);
+        parsedParents = parsedParents.filter(x => x) as WorkItem<keyof WorkItemFields>[];
         summary = await ParseItemType(config, parsedParents, summary);
     }
 
@@ -143,18 +146,25 @@ async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof Wo
 
         // Ensure current item is defined
         topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)] = topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)] ?? {
-            assignedTo: new Set(),
+            title: workItem.fields["System.Title"],
+            assignedTo: []
         }
 
         // Add assigned user to this item
         if (workItem?.fields["System.AssignedTo"]?.uniqueName !== undefined || workItem?.fields["System.AssignedTo"]?.displayName !== undefined) {
-            topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.add(workItem.fields["System.AssignedTo"].uniqueName ?? workItem.fields["System.AssignedTo"].displayName);
+            const name = workItem?.fields["System.AssignedTo"]?.uniqueName ?? workItem?.fields["System.AssignedTo"]?.displayName;
+            if (topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.indexOf(name) === -1) {
+                topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.push(name);
+            }
         } else {
             console.warn(`Work item ${workItem.id} has no assigned user`, {...workItem});
         }
 
         if (workItem.fields["System.Parent"]) {
-            topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].parent = String(workItem.fields["System.Parent"]);
+            topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].parent = {
+                id: String(workItem.fields["System.Parent"]),
+                workItemType: workItem.fields["System.WorkItemType"]
+            }
         }
 
         // Parent and parent type is guaranteed to be defined due to recursion
@@ -163,9 +173,19 @@ async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof Wo
             const parentType = parsedParents.find(x => x.id === parent)?.fields["System.WorkItemType"];
 
             if (parent && parentType) {
-                topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.forEach(assignedTo => topDownMap[parentType]![parent].assignedTo.add(assignedTo))
-                topDownMap[parentType]![parent].children = topDownMap[parentType]![parent].children ?? new Set();
-                topDownMap[parentType]![parent].children!.add(String(workItem.id));
+                topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.forEach(assignedTo => {
+                    if (topDownMap[parentType]![parent].assignedTo.indexOf(assignedTo) === -1) {
+                        topDownMap[parentType]![parent].assignedTo.push(assignedTo)
+                    }
+                });
+                topDownMap[parentType]![parent].children = topDownMap[parentType]![parent].children ?? [];
+
+                if (!topDownMap[parentType]![parent].children!.some(x => x.id === String(workItem.id))) {
+                    topDownMap[parentType]![parent].children!.push({
+                        id: String(workItem.id),
+                        workItemType: workItem.fields["System.WorkItemType"]
+                    });
+                }
             }
         }
     }
@@ -179,55 +199,30 @@ async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof Wo
 async function MapOutWorkItems(summary: IterationSummary): Promise<IterationSummary> {
     const config = await loadConfig();
 
-    const bugs = summary.workItems.filter(x => x.tags.workItemType === "Bug").map(x => x.id);
-    const tasks = summary.workItems.filter(x => x.tags.workItemType === "Task").map(x => x.id);
-    const deliverables = summary.workItems.filter(x => x.tags.workItemType === "Deliverable").map(x => x.id);
-    const scenarios = summary.workItems.filter(x => x.tags.workItemType === "Scenario").map(x => x.id);
-    const epics = summary.workItems.filter(x => x.tags.workItemType === "Epic").map(x => x.id);
-    const krs = summary.workItems.filter(x => x.tags.workItemType === "Key Result").map(x => x.id);
+    const workItemTypes: WorkItemType[] = ["Bug", "Task", "Deliverable", "Scenario", "Epic", "Key Result"];
 
+    const promises = workItemTypes.map(async (workItemType) => {
+        let items = [];
+        console.log("Getting all items of type: ", workItemType);
+        for (const key in summary.workItems) {
+            const workItem = summary.workItems[key];
+            if (workItem.tags?.workItemType === workItemType && !workItem.tags?.ignore) {
+                items.push(workItem.id);
+            }
+        }
 
-    if (bugs.length > 0) {
-        console.log("Getting parents of all bugs");
-        const bugsParsed = await GetBatchItemDetails(config, bugs, fields);
-        console.log("Parsing bugs");
-        summary = await ParseItemType(config, bugsParsed, summary);
-    }
+        if (items.length === 0) {
+            console.log("No items of type: ", workItemType);
+            return;
+        }
 
-    if (tasks.length > 0) {
-        console.log("Getting parents of all tasks");
-        const tasksParsed = await GetBatchItemDetails(config, tasks, fields);
-        console.log("Parsing tasks");
-        summary = await ParseItemType(config, tasksParsed, summary);
-    }
+        console.log(`Getting parents of all ${workItemType}`);
+        const itemsParsed = await GetBatchItemDetails(config, items, fields);
+        console.log(`Parsing ${workItemType}s`);
+        summary = await ParseItemType(config, itemsParsed, summary);
+    });
 
-    if (deliverables.length > 0) {
-        console.log("Getting parents of all deliverables");
-        const deliverablesParsed = await GetBatchItemDetails(config, deliverables, fields);
-        console.log("Parsing deliverables");
-        summary = await ParseItemType(config, deliverablesParsed, summary);
-    }
-
-    if (scenarios.length > 0) {
-        console.log("Getting parents of all scenarios");
-        const scenariosParsed = await GetBatchItemDetails(config, scenarios, fields);
-        console.log("Parsing scenarios");
-        summary = await ParseItemType(config, scenariosParsed, summary);
-    }
-
-    if (epics.length > 0) {
-        console.log("Getting parents of all epics");
-        const epicsParsed = await GetBatchItemDetails(config, epics, fields);
-        console.log("Parsing epics");
-        summary = await ParseItemType(config, epicsParsed, summary);
-    }
-
-    if (krs.length > 0){
-        console.log("Getting parents of all K/R's");
-        const krsParsed = await GetBatchItemDetails(config, krs, fields);
-        console.log("Parsing K/R's");
-        summary = await ParseItemType(config, krsParsed, summary);
-    }
+    await Promise.all(promises);
 
     console.log("Done parsing all items");
     return summary;

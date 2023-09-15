@@ -2,11 +2,127 @@ import { useEffect, useState } from "react";
 import { BellIcon } from "@heroicons/react/24/outline";
 import MDEditor from "@uiw/react-md-editor";
 import logoPath from "../../assets/icons/128.png";
-import { IterationSummary } from "../../models/adoSummary";
-import { markdownTable } from 'markdown-table'
-import dayjs from "dayjs";
+import { ItemsRelation, IterationSummary } from "../../models/adoSummary";
+import { markdownTable } from 'markdown-table';
 import { useSearchParams } from "react-router-dom";
 import { GenerateIterationSummaryAction } from "../../models/actions";
+import { WorkItemType } from "../../models/adoApi";
+
+const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: IterationSummary, column: number = 0): string[][] => {
+  let table: string[][] = [];
+  if (items === undefined) {
+    return table;
+  }
+
+  // Iterate through all items passed through
+  for (const key in items) {
+    const item = items[key];
+
+    // Only add if the user is related to this item in any way
+    if (item.assignedTo.indexOf(user) !== -1) {
+      let row: string[] = [];
+      for (let i = 0; i < column; i++) {
+        row.push("");
+      }
+      row.push(`[${key}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${key}) ${item.title.substring(0, 35)}`);
+      table.push(row);
+
+      // If there's any children of this item, recursively add it to the table as well
+      if (item.children !== undefined) {
+
+        // Items to recursively parse
+        let childrenItems: ItemsRelation = {};
+
+        // Add all children to the table where the user is assigned to
+        item.children.forEach(child => {
+          if (summary.topDownMap[child.workItemType]![child.id].assignedTo.indexOf(user) === -1) return;
+          childrenItems[child.id] = summary.topDownMap[child.workItemType]![child.id];
+        });
+
+        // Recursively parse items
+        table.push(...parseWorkItemTypeForUser(user, childrenItems, summary, column + 1));
+      }
+    }
+  }
+
+  return table;
+};
+
+const parseUser = (user: string, summary: IterationSummary): string | null => {
+  let overallTable: string[][] = []
+
+  overallTable.push(['Epic / Key Result', 'Scenario', 'Deliverable', 'Task / Bug']);
+  if (summary.topDownMap.Epic !== undefined && Object.keys(summary.topDownMap.Epic).length > 0) {
+    overallTable.push(...parseWorkItemTypeForUser(user, summary.topDownMap['Epic'], summary));
+  }
+
+  if (summary.topDownMap["Key Result"] !== undefined && Object.keys(summary.topDownMap["Key Result"]).length > 0) {
+    overallTable.push(...parseWorkItemTypeForUser(user, summary.topDownMap['Key Result'], summary));
+  }
+
+  // Put all the scenarios that weren't captured in the epics
+  if (summary.topDownMap["Scenario"] !== undefined && Object.keys(summary.topDownMap["Scenario"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Scenario"]).filter(key => summary.topDownMap["Scenario"]![key].parent === undefined && summary.topDownMap["Scenario"]![key].assignedTo.indexOf(user) !== -1);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Scenario"]![key];
+      });
+      overallTable.push(["[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 1));
+    }
+  }
+
+  // Put all the deliverables that weren't captured in the epics
+  if (summary.topDownMap["Deliverable"] !== undefined && Object.keys(summary.topDownMap["Deliverable"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Deliverable"]).filter(key => summary.topDownMap["Deliverable"]![key].parent === undefined && summary.topDownMap["Deliverable"]![key].assignedTo.indexOf(user) !== -1);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Deliverable"]![key];
+      });
+      overallTable.push(["", "[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 2));
+    }
+  }
+
+  // Put all the tasks that weren't captured in the epics
+  if (summary.topDownMap["Task"] !== undefined && Object.keys(summary.topDownMap["Task"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Task"]).filter(key => summary.topDownMap["Task"]![key].parent === undefined && summary.topDownMap["Task"]![key].assignedTo.indexOf(user) !== -1);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Task"]![key];
+      });
+      console.log("Task", user, parentlessItems, parentlessItemsMap);
+      overallTable.push(["", "", "[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 3));
+    }
+  }
+
+  // Put all the tasks that weren't captured in the epics
+  if (summary.topDownMap["Bug"] !== undefined && Object.keys(summary.topDownMap["Bug"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Bug"]).filter(key => summary.topDownMap["Bug"]![key].parent === undefined && summary.topDownMap["Bug"]![key].assignedTo.indexOf(user) !== -1);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Bug"]![key];
+      });
+      console.log("Bug", user, parentlessItemsMap);
+      overallTable.push(["", "", "[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 3));
+    }
+  }
+
+  if (overallTable.length === 1) {
+    return null;
+  }
+
+  return markdownTable(overallTable, {
+    padding: false,
+    alignDelimiters: false
+  });
+}
 
 const App = (): JSX.Element => {
   const [searchParams, _setSearchParams] = useSearchParams()
@@ -28,7 +144,7 @@ const App = (): JSX.Element => {
     }
     console.log("Got summary");
     console.log(request);
-    setSummary(request.summary as IterationSummary);
+    setSummary(request.summary);
   };
 
   useEffect(() => {
@@ -71,129 +187,164 @@ const App = (): JSX.Element => {
   }, [team, iterationId, generateRequestSent]);
 
   useEffect(() => {
-    setValue(`Done. Check console\n${summary?.workItems.length ?? 0} work items processed`);
-//     let overallTable: string[][] = [
-//       ['Type', 'ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off', 'Punted']
-//     ]
+    if (!summary || !team) {
+      return;
+    }
 
-//     let completedTable: string[][] = [
-//       ['ID', 'Title', 'Moved In', 'Reassigned', 'Time Spent', 'Notes']
-//     ]
+    let allUsers = new Set<string>();
 
-//     let movedOutTable: string[][] = [
-//       ['ID', 'Title', 'Time Spent', 'Time Added', 'Time Left', 'Notes']
-//     ]
+    for (const key in summary.topDownMap) {
+      const workItemType = key as unknown as WorkItemType;
 
-//     for (let item of summary.workItems) {
-//       let overallRow: string[] = []
-//       let completedRow: string[] = []
-//       let movedOutRow: string[] = []
-//       let title = item.title.length > 70 ? item.title.substring(0, 70).concat('...') : item.title;
+      if (summary.topDownMap[workItemType] === undefined) continue;
+      const items: ItemsRelation = summary.topDownMap[workItemType]!
 
-//       // Type | Work ID | Title | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
-//       switch (item.tags.workItemType) {
-//         case 'Task':
-//           overallRow.push('✅');
-//           break;
-//         case 'Deliverable':
-//           overallRow.push('🏆');
-//           break;
-//         case 'Bug':
-//           overallRow.push('🐜');
-//           break;
-//         default:
-//           overallRow.push(item.tags.workItemType ?? '');
-//       }
-//       overallRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-//       overallRow.push(title);
-//       // row.push("(type)")
+      for (const key in items) {
+        const users = summary.topDownMap[workItemType]![key].assignedTo;
 
+        users.forEach(user => {
+          allUsers.add(user);
+        })
+      }
+    }
 
-//       if (item.tags.completedByMe) {
-//         overallRow.push("X")
-//         completedRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-//         completedRow.push(title);
-//         if (item.tags.moved?.intoIteration) {
-//           completedRow.push("X")
-//         } else {
-//           completedRow.push("")
-//         }
-//         if (item.tags.reassigned?.toMe || item.tags.reassigned?.fromMe) {
-//           completedRow.push("X");
-//         } else {
-//           completedRow.push("");
-//         }
-//         if (item.tags.capacity) {
-//           completedRow.push(`${item.tags.capacity.timeRemoved}`);
-//         }
-//       } else {
-//         overallRow.push("")
-//       }
+    let finalReport: string = `# Sprint summary for ${summary.iteration.name} (${team})\n\n`;
 
-//       if (item.tags.moved?.intoIteration) {
-//         overallRow.push("X")
-//       } else {
-//         overallRow.push("")
-//       }
+    console.log("Users: ", allUsers);
+    for (const user of allUsers) {
+      const userReport = parseUser(user, summary);
+      if (userReport === null) {
+        continue;
+      }
+      finalReport += `## ${user}\n${userReport}\n\n`;
+    }
 
-//       if (item.tags.reassigned?.toMe) {
-//         overallRow.push("X")
-//       } else {
-//         overallRow.push("")
-//       }
+    console.log("Final report: ", finalReport);
 
-//       if (item.tags.reassigned?.fromMe) {
-//         overallRow.push("X")
-//       } else {
-//         overallRow.push("")
-//       }
+    setValue(finalReport);
+
+    //     let overallTable: string[][] = [
+    //       ['Type', 'ID', 'Title', 'Completed', 'Moved In', 'Reassigned To', 'Reassigned Off', 'Punted']
+    //     ]
+
+    //     let completedTable: string[][] = [
+    //       ['ID', 'Title', 'Moved In', 'Reassigned', 'Time Spent', 'Notes']
+    //     ]
+
+    //     let movedOutTable: string[][] = [
+    //       ['ID', 'Title', 'Time Spent', 'Time Added', 'Time Left', 'Notes']
+    //     ]
+
+    //     for (let item of summary.workItems) {
+    //       let overallRow: string[] = []
+    //       let completedRow: string[] = []
+    //       let movedOutRow: string[] = []
+    //       let title = item.title.length > 70 ? item.title.substring(0, 70).concat('...') : item.title;
+
+    //       // Type | Work ID | Title | Completed | Reassigned To | Reassigned From | Moved In | Moved Off
+    //       switch (item.tags.workItemType) {
+    //         case 'Task':
+    //           overallRow.push('✅');
+    //           break;
+    //         case 'Deliverable':
+    //           overallRow.push('🏆');
+    //           break;
+    //         case 'Bug':
+    //           overallRow.push('🐜');
+    //           break;
+    //         default:
+    //           overallRow.push(item.tags.workItemType ?? '');
+    //       }
+    //       overallRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
+    //       overallRow.push(title);
+    //       // row.push("(type)")
 
 
-//       if (item.tags.moved?.outOfIteration) {
-//         overallRow.push("X")
-//         movedOutRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
-//         movedOutRow.push(title)
+    //       if (item.tags.completedByMe) {
+    //         overallRow.push("X")
+    //         completedRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
+    //         completedRow.push(title);
+    //         if (item.tags.moved?.intoIteration) {
+    //           completedRow.push("X")
+    //         } else {
+    //           completedRow.push("")
+    //         }
+    //         if (item.tags.reassigned?.toMe || item.tags.reassigned?.fromMe) {
+    //           completedRow.push("X");
+    //         } else {
+    //           completedRow.push("");
+    //         }
+    //         if (item.tags.capacity) {
+    //           completedRow.push(`${item.tags.capacity.timeRemoved}`);
+    //         }
+    //       } else {
+    //         overallRow.push("")
+    //       }
 
-//         if (item.tags.capacity) {
-//           movedOutRow.push(`${item.tags.capacity.timeRemoved}`);
-//           movedOutRow.push(`${item.tags.capacity.timeAdded}`);
-//           movedOutRow.push(`${item.tags.capacity.timeLeft}`);
-//         } else {
-//           movedOutRow.push("?");
-//           movedOutRow.push("?");
-//           movedOutRow.push("?");
-//         }
-//         movedOutRow.push("");
-//       } else {
-//         overallRow.push("")
-//       }
+    //       if (item.tags.moved?.intoIteration) {
+    //         overallRow.push("X")
+    //       } else {
+    //         overallRow.push("")
+    //       }
 
-//       overallTable.push(overallRow);
-//       if (completedRow.length > 0) {
-//         completedTable.push(completedRow);
-//       }
-//       if (movedOutRow.length > 0) {
-//         movedOutTable.push(movedOutRow);
-//       }
-//     }
+    //       if (item.tags.reassigned?.toMe) {
+    //         overallRow.push("X")
+    //       } else {
+    //         overallRow.push("")
+    //       }
 
-//     setValue(
-//       `# Sprint summary for ${summary.iteration.name}
-
-// **Completed:**
-// ${markdownTable(completedTable)}
-
-// **Moved Out:**
-// ${markdownTable(movedOutTable)}
-
-// **Detailed Breakdown**
-// ${markdownTable(overallTable)}
+    //       if (item.tags.reassigned?.fromMe) {
+    //         overallRow.push("X")
+    //       } else {
+    //         overallRow.push("")
+    //       }
 
 
-// #### Generated on ${dayjs().format(`MM/DD/YYYY, hh:mma`)}
-// `
-//     );
-  }, [summary]);
+    //       if (item.tags.moved?.outOfIteration) {
+    //         overallRow.push("X")
+    //         movedOutRow.push(`[${item.id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${item.id})`)
+    //         movedOutRow.push(title)
+
+    //         if (item.tags.capacity) {
+    //           movedOutRow.push(`${item.tags.capacity.timeRemoved}`);
+    //           movedOutRow.push(`${item.tags.capacity.timeAdded}`);
+    //           movedOutRow.push(`${item.tags.capacity.timeLeft}`);
+    //         } else {
+    //           movedOutRow.push("?");
+    //           movedOutRow.push("?");
+    //           movedOutRow.push("?");
+    //         }
+    //         movedOutRow.push("");
+    //       } else {
+    //         overallRow.push("")
+    //       }
+
+    //       overallTable.push(overallRow);
+    //       if (completedRow.length > 0) {
+    //         completedTable.push(completedRow);
+    //       }
+    //       if (movedOutRow.length > 0) {
+    //         movedOutTable.push(movedOutRow);
+    //       }
+    //     }
+
+    //     setValue(
+    //       `# Sprint summary for ${summary.iteration.name}
+
+    // **Completed:**
+    // ${markdownTable(completedTable)}
+
+    // **Moved Out:**
+    // ${markdownTable(movedOutTable)}
+
+    // **Detailed Breakdown**
+    // ${markdownTable(overallTable)}
+
+
+    // #### Generated on ${dayjs().format(`MM/DD/YYYY, hh:mma`)}
+    // `
+    //     );
+  }, [summary, team]);
 
   return (
     <>

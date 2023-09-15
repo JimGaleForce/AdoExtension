@@ -9,10 +9,16 @@ export type IterationParserExtraData = {
     iteration: Iteration
 }
 
+type WorkItemReference = {
+    id: string
+    workItemType: WorkItemType
+}
+
 export type ItemRelation = {
-    assignedTo: Set<string>
-    parent?: string
-    children?: Set<string>
+    assignedTo: string[]
+    title: string
+    parent?: WorkItemReference
+    children?: WorkItemReference[]
 };
 
 export type ItemsRelation = {
@@ -21,8 +27,6 @@ export type ItemsRelation = {
 
 export type TopDownMap = {
     [key in WorkItemType]?: ItemsRelation
-} & {
-    Unparented?: ItemsRelation
 };
 
 // Get all work items that were ever in an iteration for a given area path
@@ -56,6 +60,8 @@ export type IterationItemParser = ItemParser<WorkItemTags, IterationParserExtraD
 
 export interface IterationSummary {
     iteration: Iteration
-    workItems: ItemSummary<WorkItemTags>[]
+    workItems: {
+        [key: string]: ItemSummary<WorkItemTags>
+    }
     topDownMap: TopDownMap
 }
