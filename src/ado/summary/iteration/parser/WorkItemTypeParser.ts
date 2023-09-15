@@ -5,16 +5,15 @@ export const WorkItemTypeParser: IterationItemParser = async (config, _workItem,
   let workItemTypeTag: WorkItemTypeTag = {
     workItemType: _workItem.fields["System.WorkItemType"]
   }
-for (const historyEvent of workItemHistoryEvents) {
-  if (historyEvent.fields?.["System.WorkItemType"]?.newValue) {
-    workItemTypeTag.workItemType = historyEvent.fields?.["System.WorkItemType"]?.newValue;
+
+  for (const historyEvent of workItemHistoryEvents) {
+    if (historyEvent.fields?.["System.WorkItemType"]?.newValue) {
+      workItemTypeTag.workItemType = historyEvent.fields?.["System.WorkItemType"]?.newValue;
+    }
   }
-}
 
-
-  // workItemHistoryEvents[workItemHistoryEvents.length - 1].fields?.["System.WorkItemType"]?.newValue ??
-    return {
-        ...tags,
-        ...workItemTypeTag
-    };
+  tags = {
+    ...tags,
+    ...workItemTypeTag
+  };
 }

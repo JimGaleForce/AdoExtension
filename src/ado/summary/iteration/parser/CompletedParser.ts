@@ -1,12 +1,14 @@
 import { IterationItemParser } from "../../../../models/adoSummary/iteration";
 import { CompletedTag } from "../../../../models/ItemTag/CompletedTag";
 
-export const CompletedParser: IterationItemParser = async (config, _workItem, workItemHistoryEvents, tags, _extra) => {
-    let completedTag: CompletedTag = {
-        completedByMe: false
-    }
-
+export const CompletedParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags, _extra) => {
+    let completed = false;
+    let completedBy = null;
+    let assignedTo = workItem.fields["System.AssignedTo"].uniqueName
     for (const historyEvent of workItemHistoryEvents) {
+        if (historyEvent.fields?.["System.AssignedTo"]?.newValue) {
+            assignedTo = historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName;
+        }
         if (
             (
                 historyEvent.fields?.["System.State"]?.newValue === 'Completed' ||
@@ -14,7 +16,8 @@ export const CompletedParser: IterationItemParser = async (config, _workItem, wo
                 historyEvent.fields?.["System.State"]?.newValue === 'Closed'
             )
             ) {
-                completedTag.completedByMe = true
+                completed = true
+                completedBy = assignedTo;
             }
         if (
             historyEvent.fields?.["System.State"]?.newValue &&
@@ -24,12 +27,18 @@ export const CompletedParser: IterationItemParser = async (config, _workItem, wo
                 historyEvent.fields?.["System.State"].newValue === 'Closed'
             )
             ) {
-                completedTag.completedByMe = false
+                completed = false
+                completedBy = null;
             }
     }
 
-    return {
-        ...tags,
-        ...completedTag
-    };
+    if (completed && completedBy) {
+        let completedTag: CompletedTag = {
+            completedBy
+        }
+        tags = {
+            ...tags,
+            ...completedTag
+        }
+    }
 }

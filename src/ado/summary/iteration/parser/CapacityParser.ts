@@ -8,6 +8,7 @@ export const CapacityParser: IterationItemParser = async (config, _workItem, wor
             timeAdded: 0,
             timeRemoved: 0,
             timeLeft: _workItem.fields["OSG.RemainingDays"] ?? 0,
+            capacityImpact: {}
         }
     }
 
@@ -32,7 +33,7 @@ export const CapacityParser: IterationItemParser = async (config, _workItem, wor
         }
     }
 
-    return {
+    tags = {
         ...tags,
         ...capacityTag
     };

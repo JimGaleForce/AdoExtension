@@ -134,9 +134,7 @@ export type AdoUser = {
 }
 
 export type WorkItemFields = {
-    // Catch all as there can always be custom fields
-    // [key: string]: unknown
-
+    [key: string]: any;
     "System.Id": number
     "System.AreaPath": string
     "System.TeamProject": string
@@ -160,6 +158,7 @@ export type WorkItemFields = {
     "OSG.RemainingDevDays"?: number
     "OSG.Cost"?: number
 }
+
 
 export type WorkItem<T extends keyof WorkItemFields = keyof WorkItemFields> = {
     id: number

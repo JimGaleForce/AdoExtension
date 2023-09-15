@@ -1,39 +1,23 @@
 import dayjs from "dayjs";
-import { Iteration, WorkItem, WorkItemFields, WorkItemHistory } from "../../../models/adoApi";
+import { Iteration, WorkItemHistory } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { IterationSummary } from "../../../models/adoSummary";
 import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import {  GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
-import { CompletedParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
-import { TitleParser } from "./parser/TitleParser";
+import { CompletedParser, HistoryItemParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { CapacityParser } from "./parser/CapacityParser";
 import { ItemSummary } from "../../../models/adoSummary/item";
 
+// Parsers are ran sequentially
 const IterationSummaryParser: IterationItemParser[] = [
-    TitleParser,
     ReassignedParser,
     CompletedParser,
     IterationTrackerParser,
     WorkItemTypeParser,
-    CapacityParser
+    CapacityParser,
+    HistoryItemParser,
 ]
-
-// const workItemFieldsOfInterest: Partial<keyof WorkItemFields>[] = [
-//     "System.Id",
-//     "System.Title",
-//     "System.WorkItemType",
-//     "Microsoft.VSTS.Scheduling.RemainingWork",
-//     "System.AreaPath",
-//     "System.IterationPath",
-//     "System.State",
-//     "System.Reason",
-//     "System.AssignedTo",
-//     "Microsoft.VSTS.Scheduling.OriginalEstimate",
-//     "OSG.RemainingDevDays"
-// ];
-
-// type WorkItemFieldTypes = typeof workItemFieldsOfInterest[number];
 
 // Generates a proper ADO Summary for a given team and iteration
 export async function SummaryForIteration(team: string, iterationId: string) {
@@ -48,9 +32,6 @@ export async function SummaryForIteration(team: string, iterationId: string) {
     // After this, output a markdown of all output items
 
     const config = await loadConfig();
-
-    // Fields we're interested in:
-
 
     // First - get data about specified iteration (start date / end date)
     const iteration = await GetIteration(config, iterationId);
@@ -89,7 +70,6 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
         return null;
     }
 
-
     if (workItemHistory.count === 0 || !workItemHistory.value[0].fields?.["System.AuthorizedDate"]?.newValue) {
         console.warn(`No history for item ${workItemId}. Skipping`);
         return null;
@@ -107,30 +87,22 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     }
 
     let tags: Partial<WorkItemTags> = {}
+
     // Ignore any events that occured outside of our desired timeframe
     const relevantHistoryEvents = workItemHistory.value.filter(historyEvent => {
         const revisedDate = dayjs(historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.fields?.["System.ChangedDate"]?.newValue)
         return revisedDate.isAfter(startDate) && revisedDate.isBefore(finishDate)
     });
 
-    // Ignore this work item if not relevant to us
-    if (
-        workItem.fields["System.AssignedTo"].uniqueName !== config.email &&
-        !(relevantHistoryEvents.some(
-            historyEvent => historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName === config.email
-        ))) {
-        return null;
-    }
-
     // Parse the work item using all parsers defined in the IterationSummaryParser.
     // The parser will update the `workItemSummary.tags` object directly
     for (const parser of IterationSummaryParser) {
-        tags = await parser(config, workItem, relevantHistoryEvents, tags, extraData);
+        await parser(config, workItem, relevantHistoryEvents, tags, extraData);
     }
 
     return {
         id: workItemId,
         title: workItem.fields["System.Title"],
-        tags: tags
+        tags: tags,
     }
 }
