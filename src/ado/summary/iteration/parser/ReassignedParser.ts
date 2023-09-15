@@ -29,8 +29,8 @@ export const ReassignedParser: IterationItemParser = async (config, workItem, wo
         }
 
         // If the work was not completed, and reassign, tag the relevant users
-        if (historyEvent.fields?.["System.AssignedTo"]?.newValue) {
-            const oldAssignedTo = assignedTo = 
+        if (historyEvent.fields?.["System.AssignedTo"]?.newValue && assignedTo !== historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName) {
+            const oldAssignedTo = assignedTo;
             assignedTo = historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName;
             reassignedTag.reassigned.from.add(oldAssignedTo);
             reassignedTag.reassigned.to = assignedTo;

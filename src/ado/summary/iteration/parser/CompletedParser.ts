@@ -33,7 +33,7 @@ export const CompletedParser: IterationItemParser = async (config, workItem, wor
     }
 
     // Only add tag if something happened
-    if (addTag) {
+    if (addTag && completedBy) {
         let completedTag: CompletedTag = {
             completedBy
         }

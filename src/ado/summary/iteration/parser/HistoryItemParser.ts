@@ -6,6 +6,7 @@ export const HistoryItemParser: IterationItemParser = async (config, workItem, w
 
         for (const field in historyEvent.fields) {
             if (historyEvent.fields[field]?.newValue ) {
+                // @ts-ignore field could be an arbitrary string which is okay
                 workItem.fields[field] = historyEvent.fields[field]?.newValue ?? workItem.fields[field];
             }
         }

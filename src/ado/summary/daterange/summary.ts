@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { Iteration, WorkItemFields, WorkItemHistory } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
-import { DateRangeSummary, GetWorkItemsFromStorageByIteration, IterationSummary } from "../../../models/adoSummary";
+import { DateRangeSummary, IterationSummary } from "../../../models/adoSummary";
 import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
@@ -39,22 +39,22 @@ export async function SummaryForDateRange(startDate: Date, endDate: Date) {
         summary: {}
     }
 
-    const query = WiqlQueryBuilder
-        .select("System.ChangedDate", "System.AreaPath", "System.AssignedTo", "System.Id", "System.IterationPath")
-        .from("workitems")
-        .where("System.AreaPath", '=', "Edge\\Growth\\Feedback and Diagnostics")
-        .and("System.AssignedTo", '<>', Macro.CurrentUser)
-        .andGroup(builder => {
-            builder
-                .ever("System.AssignedTo", "=", Macro.CurrentUser)
-        })
-        ;
+    // const query = WiqlQueryBuilder
+    //     .select("System.ChangedDate", "System.AreaPath", "System.AssignedTo", "System.Id", "System.IterationPath")
+    //     .from("workitems")
+    //     .where("System.AreaPath", '=', "Edge\\Growth\\Feedback and Diagnostics")
+    //     .and("System.AssignedTo", '<>', Macro.CurrentUser)
+    //     .andGroup(builder => {
+    //         builder
+    //             .ever("System.AssignedTo", "=", Macro.CurrentUser)
+    //     })
+    //     ;
 
-    console.log("Query:");
-    console.log(query.buildQuery());
+    // console.log("Query:");
+    // console.log(query.buildQuery());
 
-    console.log("Result:");
-    console.log(await query.execute(config));
+    // console.log("Result:");
+    // console.log(await query.execute(config));
 
     // // We could potentially do a map on `workItemIds` to proceess items
     // // in parallel. This was not initially done due to concerns of hitting

@@ -134,7 +134,7 @@ export type AdoUser = {
 }
 
 export type WorkItemFields = {
-    [key: string]: any;
+    // [key: string]: any;
     "System.Id": number
     "System.AreaPath": string
     "System.TeamProject": string

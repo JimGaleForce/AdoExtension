@@ -8,9 +8,13 @@ import {  GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, HistoryItemParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { CapacityParser } from "./parser/CapacityParser";
 import { ItemSummary } from "../../../models/adoSummary/item";
+import { IgnoreParser } from "./parser/IgnoreParser";
+import { AssignedToParser } from "./parser/AssignedToParser";
 
 // Parsers are ran sequentially
 const IterationSummaryParser: IterationItemParser[] = [
+    IgnoreParser,
+    AssignedToParser,
     ReassignedParser,
     CompletedParser,
     IterationTrackerParser,
