@@ -140,7 +140,7 @@ export type WorkItemFields = {
     "System.TeamProject": string
     "System.IterationPath": string
     "System.WorkItemType": WorkItemType | string
-    "System.State": WorkItemState | string // different orgs might have different states
+    "System.State": WorkItemState
     "System.Reason": string
     "System.AssignedTo": AdoUser
     "System.CreatedDate": string

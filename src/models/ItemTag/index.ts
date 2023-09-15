@@ -1,6 +1,7 @@
 import { BugTag } from './BugTag';
 import { CapacityTag } from './CapacityTag';
 import { CompletedTag } from './CompletedTag';
+import { IgnoreTag } from './IgnoreTag';
 import { IterationTrackerTag } from './IterationTrackerTag';
 import { ReassignedTag } from './ReassignedTag';
 import { WorkItemTypeTag } from './WorkItemTypeTag';
@@ -36,3 +37,4 @@ export type WorkItemTags =
 & IterationTrackerTag
 & ReassignedTag
 & WorkItemTypeTag
+& IgnoreTag

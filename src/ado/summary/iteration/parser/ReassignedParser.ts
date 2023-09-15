@@ -12,6 +12,7 @@ export const ReassignedParser: IterationItemParser = async (config, workItem, wo
     }
 
     const isCompletedState: WorkItemState[] = ['Closed', 'Cut', 'Resolved'] 
+    let addTag = false;
     let isCompleted = false
     let assignedTo = workItem.fields["System.AssignedTo"].uniqueName
 
@@ -37,11 +38,17 @@ export const ReassignedParser: IterationItemParser = async (config, workItem, wo
                 from: oldAssignedTo,
                 to: assignedTo,
             });
+            addTag = true;
         }
     }
 
-    tags = {
-        ...tags,
-        ...reassignedTag
+    // Add tag only if something happened
+    if (addTag) {
+        return {
+            ...tags,
+            ...reassignedTag
+        }
     }
+
+    return tags;
 }

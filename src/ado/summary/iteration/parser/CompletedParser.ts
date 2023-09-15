@@ -2,8 +2,8 @@ import { IterationItemParser } from "../../../../models/adoSummary/iteration";
 import { CompletedTag } from "../../../../models/ItemTag/CompletedTag";
 
 export const CompletedParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags, _extra) => {
-    let completed = false;
     let completedBy = null;
+    let addTag = false;
     let assignedTo = workItem.fields["System.AssignedTo"].uniqueName
     for (const historyEvent of workItemHistoryEvents) {
         if (historyEvent.fields?.["System.AssignedTo"]?.newValue) {
@@ -16,8 +16,8 @@ export const CompletedParser: IterationItemParser = async (config, workItem, wor
                 historyEvent.fields?.["System.State"]?.newValue === 'Closed'
             )
             ) {
-                completed = true
                 completedBy = assignedTo;
+                addTag = true;
             }
         if (
             historyEvent.fields?.["System.State"]?.newValue &&
@@ -27,18 +27,21 @@ export const CompletedParser: IterationItemParser = async (config, workItem, wor
                 historyEvent.fields?.["System.State"].newValue === 'Closed'
             )
             ) {
-                completed = false
                 completedBy = null;
+                addTag = false
             }
     }
 
-    if (completed && completedBy) {
+    // Only add tag if something happened
+    if (addTag) {
         let completedTag: CompletedTag = {
             completedBy
         }
-        tags = {
+        return {
             ...tags,
             ...completedTag
         }
     }
+
+    return tags;
 }

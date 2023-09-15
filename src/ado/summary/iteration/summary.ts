@@ -97,7 +97,7 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     // Parse the work item using all parsers defined in the IterationSummaryParser.
     // The parser will update the `workItemSummary.tags` object directly
     for (const parser of IterationSummaryParser) {
-        await parser(config, workItem, relevantHistoryEvents, tags, extraData);
+        tags = await parser(config, workItem, relevantHistoryEvents, tags, extraData);
     }
 
     return {

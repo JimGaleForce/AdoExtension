@@ -33,7 +33,7 @@ export const CapacityParser: IterationItemParser = async (config, _workItem, wor
         }
     }
 
-    tags = {
+    return {
         ...tags,
         ...capacityTag
     };

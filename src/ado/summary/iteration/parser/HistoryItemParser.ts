@@ -10,4 +10,6 @@ export const HistoryItemParser: IterationItemParser = async (config, workItem, w
             }
         }
     }
+
+    return tags;
 }

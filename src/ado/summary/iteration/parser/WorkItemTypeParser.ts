@@ -12,7 +12,7 @@ export const WorkItemTypeParser: IterationItemParser = async (config, _workItem,
     }
   }
 
-  tags = {
+  return {
     ...tags,
     ...workItemTypeTag
   };

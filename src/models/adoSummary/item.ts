@@ -8,4 +8,4 @@ export type ItemSummary<T extends BaseTag> = {
     tags: Partial<T>
 }
 
-export type ItemParser<T extends BaseTag, U extends {}> = (config: AdoConfigData, workItem: WorkItem, workItemHistoryEvents: WorkItemHistoryEvent[], itemTags: Partial<T>, extra: U) => Promise<void>;
+export type ItemParser<T extends BaseTag, U extends {}> = (config: AdoConfigData, workItem: WorkItem, workItemHistoryEvents: WorkItemHistoryEvent[], itemTags: Partial<T>, extra: U) => Promise<Partial<T>>;
