@@ -134,12 +134,11 @@ export type AdoUser = {
 }
 
 export type WorkItemFields = {
-    // [key: string]: any;
     "System.Id": number
     "System.AreaPath": string
     "System.TeamProject": string
     "System.IterationPath": string
-    "System.WorkItemType": WorkItemType | string
+    "System.WorkItemType": WorkItemType
     "System.State": WorkItemState
     "System.Reason": string
     "System.AssignedTo": AdoUser
@@ -152,6 +151,7 @@ export type WorkItemFields = {
     "System.Title": string
     "System.IsDeleted": boolean
 
+    "System.Parent"?: number
     "Microsoft.VSTS.Scheduling.OriginalEstimate"?: number
     "Microsoft.VSTS.Scheduling.RemainingWork"?: number
     "OSG.RemainingDays"?: number

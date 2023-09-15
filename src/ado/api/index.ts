@@ -244,7 +244,7 @@ export async function GetBatchItemDetails<T extends keyof WorkItemFields>(
 
   const project = ExtractProject(config);
   const { organization } = config;
-  const url = `https://dev.azure.com/${organization}/${project}/_apis/wit/workitemsbatch?api-version=7.1-preview.1`;
+  const url = `https://dev.azure.com/${organization}/${project}/_apis/wit/workitemsbatch?api-version=7.1-preview.1&$expand=relations`;
   
   // Helper function to post a single batch
   async function postBatch(ids: string[]): Promise<WorkItem<T>[]> {

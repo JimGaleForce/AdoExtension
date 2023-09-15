@@ -1,5 +1,5 @@
 import { ItemParser, ItemSummary } from "./item";
-import { Iteration, WorkItemFields, WorkItemResult } from "../adoApi";
+import { Iteration, WorkItemResult, WorkItemType } from "../adoApi";
 import { WorkItemTags } from "../ItemTag";
 import { GetIteration, GetTeamValues } from "../../ado/api";
 import { WiqlQueryBuilder } from "../../ado/api/wiql/wiql";
@@ -9,6 +9,23 @@ export type IterationParserExtraData = {
     iteration: Iteration
 }
 
+export type ItemRelation = {
+    assignedTo: Set<string>
+    parent?: string
+    children?: Set<string>
+};
+
+export type ItemsRelation = {
+    [key: string]: ItemRelation
+};
+
+export type TopDownMap = {
+    [key in WorkItemType]?: ItemsRelation
+} & {
+    Unparented?: ItemsRelation
+};
+
+// Get all work items that were ever in an iteration for a given area path
 export async function LoadWorkItemsForIteration(team: string, iterationId: string): Promise<WorkItemResult[]> {
     const config = await loadConfig();
 
@@ -20,15 +37,12 @@ export async function LoadWorkItemsForIteration(team: string, iterationId: strin
     console.log("Got team values: ", teamValues);
 
     const query = WiqlQueryBuilder
-        .select("workitems", ["System.AreaPath", "System.IterationPath", "System.ChangedDate"])
+        .select("workitems", /* work item fields: */ ["System.AreaPath", "System.IterationPath"])
         .where("System.AreaPath", '=', teamValues.defaultValue)
         .andEver("System.IterationPath", '=', iteration.path)
         ;
-
-    console.log(query.buildQuery());
+    
     const result = await query.execute(config);
-
-    console.log("Got result: ", result);
     return result.workItems
 
     // console.log(`Parsing ${result.workItems.length} Items:`, result.workItems)
@@ -43,4 +57,5 @@ export type IterationItemParser = ItemParser<WorkItemTags, IterationParserExtraD
 export interface IterationSummary {
     iteration: Iteration
     workItems: ItemSummary<WorkItemTags>[]
+    topDownMap: TopDownMap
 }

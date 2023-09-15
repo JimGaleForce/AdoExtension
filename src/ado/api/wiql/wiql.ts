@@ -2,7 +2,7 @@ import { ExtractProject, postWithAuth } from "..";
 import { WiqlQueryType, WorkItemFields, WorkItemLinksResult, WorkItemsResult } from "../../../models/adoApi";
 import { AdoConfigData } from "../../../models/adoConfig";
 
-type Operator =
+export type Operator =
     | '='
     | '<>'
     | '<'
@@ -48,8 +48,9 @@ const valueToQueryString = (value: string | number | string[] | number[]): strin
     }
 }
 
+export type Mode = "MustContain" | "MayContain" | "DoesNotContain" | "Recursive";
 
-type Conjunction = "AND" | "OR" | "EVER" | "AND EVER" | "OR EVER";
+export type Conjunction = "AND" | "OR" | "EVER" | "AND EVER" | "OR EVER";
 
 type ConditionObject<T extends keyof WorkItemFields> = {
     field?: T;
@@ -68,6 +69,8 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields, K> {
     private _selectFields: T[];
     private _conditions: ConditionObject<T>[] = [];
     private _from: WiqlQueryType;
+    private _orderBy?: T;
+    private _mode?: Mode
 
     private constructor(from: WiqlQueryType, selectFields: T[]) {
         this._selectFields = selectFields;
@@ -135,6 +138,14 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields, K> {
         return this.group(conditions, "OR");
     }
 
+    orderBy(field: T) {
+        this._orderBy = field;
+    }
+
+    mode(mode: Mode) {
+        this._mode = mode;
+    }
+
     private buildConditionString(condition: ConditionObject<T>): string {
         if (condition.subConditions) {
             const groupConditions = condition.subConditions.map(c => this.buildConditionString(c)).join(" ");
@@ -160,7 +171,7 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields, K> {
         }
 
         const conditionString = this._conditions.map(c => this.buildConditionString(c)).join(" ");
-        return `SELECT ${this._selectFields.map(f => `[${String(f)}]`).join(", ")} FROM ${this._from} WHERE ${conditionString}`;
+        return `SELECT ${this._selectFields.map(f => `[${String(f)}]`).join(", ")} FROM ${this._from} WHERE ${conditionString}${this._orderBy ? ` ORDER BY [${this._orderBy}]` : ""}${this._mode ? ` MODE (${this._mode})` : ""}`;
     }
 
     async execute(config: AdoConfigData): Promise<K> {
@@ -180,10 +191,10 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields, K> {
 // .from("workitems")
 // .where("System.AreaPath", '=', "Edge\\Growth\\Feedback and Diagnostics")
 // .and("System.AssignedTo", '<>', Macro.CurrentUser)
-// .group(builder => {
+// .andGroup(builder => {
 //     builder
 //         .ever("System.AssignedTo", "=", Macro.CurrentUser)
-// }, 'AND')
+// })
 // .buildQuery() // Optional, but useful for debugging
 // .execute(config) // Will build and execute the query
 // ;
