@@ -102,6 +102,7 @@ export type IterationWorkItems = {
 }
 
 export type WorkItemState = 
+    | "Active"
     | "Committed"
     | "Completed"
     | "Cut"

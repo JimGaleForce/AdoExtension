@@ -2,46 +2,140 @@ import { useEffect, useState } from "react";
 import { BellIcon } from "@heroicons/react/24/outline";
 import MDEditor from "@uiw/react-md-editor";
 import logoPath from "../../assets/icons/128.png";
-import { ItemsRelation, IterationSummary } from "../../models/adoSummary";
+import { ItemRelation, ItemsRelation, IterationSummary } from "../../models/adoSummary";
 import { markdownTable } from 'markdown-table';
 import { useSearchParams } from "react-router-dom";
 import { GenerateIterationSummaryAction } from "../../models/actions";
 import { WorkItemType } from "../../models/adoApi";
 
-const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: IterationSummary, column: number = 0): string[][] => {
+
+const getIcon = (workItemType: string): string => {
+  switch (workItemType) {
+    case 'Key Result':
+    case 'Epic':
+      return '📈';
+    case 'Scenario':
+      return '👑';
+    case 'Deliverable':
+      return '🏆';
+    case 'Task':
+      return '✅';
+    case 'Bug':
+      return '🐜';
+  }
+  return "";
+}
+
+const shouldAdd = (user: string, item: ItemRelation, summary: IterationSummary): boolean => {
+  // If not related to user, don't add
+  if (item.assignedTo.indexOf(user) === -1) {
+    return false;
+  }
+
+  // If task/bug, add
+  if (item.type === "Task" || item.type === "Bug") {
+    return true;
+  }
+
+  // Else, recursively check children to see if task/bug exists and is related to user
+  if (item.children !== undefined) {
+    for (const key in item.children) {
+      const child = item.children[key];
+      const childItem = summary.topDownMap[child.workItemType]![child.id];
+      if (shouldAdd(user, childItem, summary)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: IterationSummary, indentation: number = 0): string[][] => {
   let table: string[][] = [];
   if (items === undefined) {
     return table;
+  }
+
+  let prefix = "";
+  for (let i = 0; i < indentation; i++) {
+    prefix += "---- ";
   }
 
   // Iterate through all items passed through
   for (const key in items) {
     const item = items[key];
 
-    // Only add if the user is related to this item in any way
-    if (item.assignedTo.indexOf(user) !== -1) {
-      let row: string[] = [];
-      for (let i = 0; i < column; i++) {
-        row.push("");
+    if (!shouldAdd(user, item, summary)) {
+      continue;
+    }
+
+    let row: string[] = [];
+    // Add the work item ID and title
+    row.push(`[${key}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${key})`, `${prefix} ${getIcon(item.type)} ${item.title}`);
+    
+    if (key in summary.workItems) {
+      // Add the status if it exists
+      const { tags, state } = summary.workItems[key];
+      let status = ""
+
+      if (tags.moved?.intoIteration) {
+        status += "⬅️";
       }
-      row.push(`[${key}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${key}) ${item.title.substring(0, 35)}`);
-      table.push(row);
 
-      // If there's any children of this item, recursively add it to the table as well
-      if (item.children !== undefined) {
+      if (tags.completedBy === user) {
+        status += "✅";
+      } else if (tags.completedBy !== undefined) {
+        status += "☑️";
+      } else {
 
-        // Items to recursively parse
-        let childrenItems: ItemsRelation = {};
-
-        // Add all children to the table where the user is assigned to
-        item.children.forEach(child => {
-          if (summary.topDownMap[child.workItemType]![child.id].assignedTo.indexOf(user) === -1) return;
-          childrenItems[child.id] = summary.topDownMap[child.workItemType]![child.id];
-        });
-
-        // Recursively parse items
-        table.push(...parseWorkItemTypeForUser(user, childrenItems, summary, column + 1));
+        switch (state) {
+          case "Proposed":
+            status += "🟡";
+            break;
+          case "Committed":
+          case "Active":
+            status += "🔵";
+            break;
+          case "Started":
+            status += "🟢"
+            break;
+          case "Closed":
+          case "Resolved":
+          case "Completed":
+            status += "✅";
+            break;
+          case "Cut":
+            status += "✂️";
+            break;
+          default:
+            status += "🔴";
+        }
       }
+    
+      if (tags.moved?.outOfIteration) {
+        status += "➡️";
+      }
+
+      row.push(status);
+    }
+
+    table.push(row);
+
+    // If there's any children of this item, recursively add it to the table as well
+    if (item.children !== undefined) {
+
+      // Items to recursively parse
+      let childrenItems: ItemsRelation = {};
+
+      // Add all children to the table where the user is assigned to
+      item.children.forEach(child => {
+        if (summary.topDownMap[child.workItemType]![child.id].assignedTo.indexOf(user) === -1) return;
+        childrenItems[child.id] = summary.topDownMap[child.workItemType]![child.id];
+      });
+
+      // Recursively parse items
+      table.push(...parseWorkItemTypeForUser(user, childrenItems, summary, indentation + 1));
     }
   }
 
@@ -51,7 +145,9 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: I
 const parseUser = (user: string, summary: IterationSummary): string | null => {
   let overallTable: string[][] = []
 
-  overallTable.push(['Epic / Key Result', 'Scenario', 'Deliverable', 'Task / Bug']);
+  overallTable.push(['Work Item', 'Title', 'Status']);
+
+  // Parse the epics in relation to this user
   if (summary.topDownMap.Epic !== undefined && Object.keys(summary.topDownMap.Epic).length > 0) {
     overallTable.push(...parseWorkItemTypeForUser(user, summary.topDownMap['Epic'], summary));
   }
@@ -68,7 +164,7 @@ const parseUser = (user: string, summary: IterationSummary): string | null => {
       parentlessItems.forEach(key => {
         parentlessItemsMap[key] = summary.topDownMap["Scenario"]![key];
       });
-      overallTable.push(["[Parentless]"]);
+      overallTable.push(["", "[Parentless]"]);
       overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 1));
     }
   }
@@ -95,7 +191,7 @@ const parseUser = (user: string, summary: IterationSummary): string | null => {
         parentlessItemsMap[key] = summary.topDownMap["Task"]![key];
       });
       console.log("Task", user, parentlessItems, parentlessItemsMap);
-      overallTable.push(["", "", "[Parentless]"]);
+      overallTable.push(["", "[Parentless]"]);
       overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 3));
     }
   }
@@ -109,7 +205,7 @@ const parseUser = (user: string, summary: IterationSummary): string | null => {
         parentlessItemsMap[key] = summary.topDownMap["Bug"]![key];
       });
       console.log("Bug", user, parentlessItemsMap);
-      overallTable.push(["", "", "[Parentless]"]);
+      overallTable.push(["", "[Parentless]"]);
       overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 3));
     }
   }

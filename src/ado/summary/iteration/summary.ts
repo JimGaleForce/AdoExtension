@@ -2,9 +2,9 @@ import dayjs from "dayjs";
 import { Iteration, WorkItem, WorkItemFields, WorkItemHistory, WorkItemType } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { IterationSummary } from "../../../models/adoSummary";
-import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration } from "../../../models/adoSummary/iteration";
+import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration, TopDownMap } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
-import {  GetBatchItemDetails, GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
+import { GetBatchItemDetails, GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, HistoryItemParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { CapacityParser } from "./parser/CapacityParser";
 import { ItemSummary } from "../../../models/adoSummary/item";
@@ -38,7 +38,7 @@ export async function SummaryForIteration(team: string, iterationId: string) {
     const config = await loadConfig();
 
     // First - get data about specified iteration (start date / end date)
-    const iteration = await GetIteration(config, iterationId);
+    const iteration = await GetIteration(config, iterationId, team);
     const workItems = await LoadWorkItemsForIteration(team, iterationId);
 
     const { startDate, finishDate } = iteration.attributes;
@@ -113,6 +113,8 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     return {
         id: workItemId,
         title: workItem.fields["System.Title"],
+        type: workItem.fields["System.WorkItemType"],
+        state: workItem.fields["System.State"],
         tags: tags,
     }
 }
@@ -130,9 +132,10 @@ const fields: (keyof WorkItemFields)[] = [
 async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof WorkItemFields>[], summary: IterationSummary): Promise<IterationSummary> {
     const { topDownMap } = summary;
 
-    const parentIds = workItems.map(x => x.fields["System.Parent"]).filter(x => x !== undefined).map(x => String(x));
+    // Fetch and parse parent items
+    const parentIds = [...new Set(workItems.map(x => x.fields["System.Parent"]).filter(Boolean).map(String))];
     let parsedParents: WorkItem<keyof WorkItemFields>[] = [];
-    // If parents exist, recursively get all parent work items from this type
+
     if (parentIds.length > 0) {
         console.log("Getting parents of these items");
         parsedParents = await GetBatchItemDetails(config, parentIds, fields);
@@ -140,57 +143,76 @@ async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof Wo
         summary = await ParseItemType(config, parsedParents, summary);
     }
 
-    // Now all parents should be defined, we can start filling out the map
     for (const workItem of workItems) {
-        topDownMap[workItem.fields["System.WorkItemType"]] = topDownMap[workItem.fields["System.WorkItemType"]] ?? {};
-
-        // Ensure current item is defined
-        topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)] = topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)] ?? {
-            title: workItem.fields["System.Title"],
-            assignedTo: []
+        const itemKey = workItem.fields["System.WorkItemType"] as WorkItemType;
+        const itemId = String(workItem.id);
+        
+        // Ensure current item is defined in the map
+        if (!topDownMap[itemKey]) {
+            topDownMap[itemKey] = {};
+        }
+        if (!topDownMap[itemKey]?.[itemId]) {
+            topDownMap[itemKey]![itemId] = {
+                title: workItem.fields["System.Title"],
+                type: itemKey,
+                assignedTo: []
+            };
         }
 
-        // Add assigned user to this item
-        if (workItem?.fields["System.AssignedTo"]?.uniqueName !== undefined || workItem?.fields["System.AssignedTo"]?.displayName !== undefined) {
-            const name = workItem?.fields["System.AssignedTo"]?.uniqueName ?? workItem?.fields["System.AssignedTo"]?.displayName;
-            if (topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.indexOf(name) === -1) {
-                topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.push(name);
-            }
-        } else {
-            console.warn(`Work item ${workItem.id} has no assigned user`, {...workItem});
+        // Handle assignment of users to items
+        const assignedToField = workItem?.fields["System.AssignedTo"];
+        const name = assignedToField?.uniqueName || assignedToField?.displayName;
+        if (name && topDownMap[itemKey]?.[itemId]?.assignedTo && !topDownMap[itemKey]?.[itemId]?.assignedTo.includes(name)) {
+            topDownMap[itemKey]![itemId]!.assignedTo.push(name);
+        } else if (!name) {
+            console.warn(`Work item ${workItem.id} has no assigned user`, workItem);
         }
 
+        // Handle parents and children relationships
         if (workItem.fields["System.Parent"]) {
-            topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].parent = {
-                id: String(workItem.fields["System.Parent"]),
-                workItemType: workItem.fields["System.WorkItemType"]
-            }
-        }
+            const parent = String(workItem.fields["System.Parent"]);
+            const parentType = parsedParents.find(x => String(x.id) === parent)?.fields["System.WorkItemType"];
 
-        // Parent and parent type is guaranteed to be defined due to recursion
-        if (workItem.fields["System.Parent"]) {
-            const parent = workItem.fields["System.Parent"];
-            const parentType = parsedParents.find(x => x.id === parent)?.fields["System.WorkItemType"];
+            topDownMap[itemKey]![itemId]!.parent = {
+                id: parent,
+                workItemType: parentType as WorkItemType
+            };
+            
 
-            if (parent && parentType) {
-                topDownMap[workItem.fields["System.WorkItemType"]]![String(workItem.id)].assignedTo.forEach(assignedTo => {
-                    if (topDownMap[parentType]![parent].assignedTo.indexOf(assignedTo) === -1) {
-                        topDownMap[parentType]![parent].assignedTo.push(assignedTo)
+            if (parentType && topDownMap[parentType]) {
+                const currentParent = topDownMap[parentType]?.[parent];
+                if (currentParent) {
+                    currentParent.children = currentParent.children || [];
+                    if (!currentParent.children.some(x => x.id === itemId)) {
+                        currentParent.children.push({ id: itemId, workItemType: itemKey });
                     }
-                });
-                topDownMap[parentType]![parent].children = topDownMap[parentType]![parent].children ?? [];
 
-                if (!topDownMap[parentType]![parent].children!.some(x => x.id === String(workItem.id))) {
-                    topDownMap[parentType]![parent].children!.push({
-                        id: String(workItem.id),
-                        workItemType: workItem.fields["System.WorkItemType"]
-                    });
+                    // Propagate the 'assignedTo' list up the tree
+                    propagateAssignedTo(topDownMap, itemKey, itemId, parent, parentType);
                 }
             }
         }
     }
 
     return summary;
+}
+
+function propagateAssignedTo(topDownMap: TopDownMap, itemKey: WorkItemType, itemId: string, parent: string | undefined, parentType: WorkItemType | undefined) {
+    const currentItem = topDownMap[itemKey] && topDownMap[itemKey]![itemId];
+    const assignedToList = currentItem ? currentItem.assignedTo : [];
+    while (parent && parentType) {
+        const currentParentItem = topDownMap[parentType]?.[parent];
+        if (!currentParentItem) break;
+
+        for (const assignedTo of assignedToList) {
+            if (!currentParentItem.assignedTo.includes(assignedTo)) {
+                currentParentItem.assignedTo.push(assignedTo);
+            }
+        }
+
+        parent = currentParentItem.parent?.id ? String(currentParentItem.parent.id) : undefined;
+        parentType = currentParentItem.parent?.workItemType;
+    }
 }
 
 // Given the finalized summary, finalize the top down map.
@@ -216,7 +238,7 @@ async function MapOutWorkItems(summary: IterationSummary): Promise<IterationSumm
             return;
         }
 
-        console.log(`Getting parents of all ${workItemType}`);
+        console.log(`Getting iteam information of all ${workItemType} (like parents)`);
         const itemsParsed = await GetBatchItemDetails(config, items, fields);
         console.log(`Parsing ${workItemType}s`);
         summary = await ParseItemType(config, itemsParsed, summary);

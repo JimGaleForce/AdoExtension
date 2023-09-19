@@ -1,10 +1,12 @@
-import { WorkItem, WorkItemHistoryEvent } from "../adoApi"
+import { WorkItem, WorkItemHistoryEvent, WorkItemState, WorkItemType } from "../adoApi"
 import { AdoConfigData } from "../adoConfig"
 import { BaseTag } from "../ItemTag"
 
 export type ItemSummary<T extends BaseTag> = { 
     id: string
     title: string
+    type: WorkItemType
+    state: WorkItemState
     tags: Partial<T>
 }
 

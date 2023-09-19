@@ -17,6 +17,7 @@ type WorkItemReference = {
 export type ItemRelation = {
     assignedTo: string[]
     title: string
+    type: WorkItemType
     parent?: WorkItemReference
     children?: WorkItemReference[]
 };

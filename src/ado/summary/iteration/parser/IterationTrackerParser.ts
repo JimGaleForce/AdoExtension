@@ -16,8 +16,11 @@ export const IterationTrackerParser: IterationItemParser = async (config, workIt
 
     let currentIteration = workItem.fields["System.IterationPath"];
 
-    // Mark if the task was ever committed in the current sprint during the sprint
-    let wasEverCommitted = isCommittedState.indexOf(workItem.fields["System.State"]) !== -1 && currentIteration === extra.iteration.path;
+    // Mark if the task was ever committed or completed
+    let wasEverCommittedOrCompleted = (
+        isCommittedState.indexOf(workItem.fields["System.State"]) !== -1 ||
+        isCompletedState.indexOf(workItem.fields["System.State"]) !== -1
+    );
 
     for (const historyEvent of workItemHistoryEvents) {
         // Mark if the task was marked as completed
@@ -32,11 +35,12 @@ export const IterationTrackerParser: IterationItemParser = async (config, workIt
             currentIteration = historyEvent.fields?.["System.IterationPath"].newValue;
         }
 
-        // If the work was ever marked as committed in the current sprint during the sprint
-        if (historyEvent.fields?.["System.State"]?.newValue &&
-            isCommittedState.indexOf(historyEvent.fields?.["System.State"]?.newValue) !== -1 &&
-            currentIteration === extra.iteration.path) {
-            wasEverCommitted = true;
+        // If the work was ever marked as committed or completed
+        if (historyEvent.fields?.["System.State"]?.newValue && (
+            isCommittedState.indexOf(historyEvent.fields?.["System.State"]?.newValue) !== -1 ||
+            isCompletedState.indexOf(historyEvent.fields?.["System.State"]?.newValue) !== -1
+        ) && currentIteration === extra.iteration.path) {
+            wasEverCommittedOrCompleted = true;
         }
 
 
@@ -44,18 +48,11 @@ export const IterationTrackerParser: IterationItemParser = async (config, workIt
             historyEvent.fields?.["System.IterationPath"]?.oldValue === extra.iteration.path &&
             historyEvent.fields?.["System.IterationPath"]?.newValue &&
             historyEvent.fields?.["System.IterationPath"].newValue !== extra.iteration.path) {
-            // Only mark the task as punted if it was ever committed in the sprint during the sprint
-            if (wasEverCommitted) {
-                iterationTrackerTag.moved.outOfIteration = true
-            }
+            iterationTrackerTag.moved.outOfIteration = true
         }
         if (historyEvent.fields?.["System.IterationPath"]?.newValue &&
             historyEvent.fields?.["System.IterationPath"].newValue === extra.iteration.path) {
-
-            // Only mark the task as brought in if it was brought in and committed.
-            if (wasEverCommitted) {
                 iterationTrackerTag.moved.intoIteration = true
-            }
         }
     }
 

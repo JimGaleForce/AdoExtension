@@ -177,9 +177,9 @@ export async function GetTeamValues(config: AdoConfigData, team: string): Promis
   return json as TeamFieldValues;
 }
 
-export async function GetIteration(config: AdoConfigData, iterationId: string): Promise<Iteration> {
+export async function GetIteration(config: AdoConfigData, iterationId: string, teamOverride?: string): Promise<Iteration> {
   const project = ExtractProject(config);
-  const team = ExtractTeam(config);
+  const team = teamOverride ?? ExtractTeam(config);
   const { organization } = config;
   let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations/${iterationId}?api-version=7.0`;
 
