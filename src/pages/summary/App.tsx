@@ -7,6 +7,7 @@ import { markdownTable } from 'markdown-table';
 import { useSearchParams } from "react-router-dom";
 import { GenerateIterationSummaryAction } from "../../models/actions";
 import { WorkItemType } from "../../models/adoApi";
+import dayjs from "dayjs";
 
 
 const getIcon = (workItemType: string): string => {
@@ -73,7 +74,7 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: I
     let row: string[] = [];
     // Add the work item ID and title
     row.push(`[${key}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${key})`, `${prefix} ${getIcon(item.type)} ${item.title}`);
-    
+
     if (key in summary.workItems) {
       // Add the status if it exists
       const { tags, state } = summary.workItems[key];
@@ -112,7 +113,7 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: I
             status += "🔴";
         }
       }
-    
+
       if (tags.moved?.outOfIteration) {
         status += "➡️";
       }
@@ -220,6 +221,128 @@ const parseUser = (user: string, summary: IterationSummary): string | null => {
   });
 }
 
+const parseWorkItemTypeForTeam = (items: ItemsRelation, summary: IterationSummary, indentation: number = 0): string[][] => {
+  let table: string[][] = [];
+  if (items === undefined) {
+    return table;
+  }
+
+  let prefix = "";
+  for (let i = 0; i < indentation; i++) {
+    prefix += "- ";
+  }
+
+  // Iterate through all items passed through
+  for (const key in items) {
+    const item = items[key];
+
+    let row: string[] = [];
+    row.push(item.type, key, `${prefix} ${item.title}`);
+
+    if (key in summary.workItems) {
+      // Add the status if it exists
+      const { assignedTo, state } = summary.workItems[key];
+
+      row.push(state, assignedTo.displayName);
+    } else {
+      row.push("", "");
+    }
+    table.push(row);
+
+    // If there's any children of this item, recursively add it to the table as well
+    if (item.children !== undefined) {
+
+      // Items to recursively parse
+      let childrenItems: ItemsRelation = {};
+
+      // Add all children to the table where the user is assigned to
+      item.children.forEach(child => {
+        childrenItems[child.id] = summary.topDownMap[child.workItemType]![child.id];
+      });
+
+      // Recursively parse items
+      table.push(...parseWorkItemTypeForTeam(childrenItems, summary, indentation + 1));
+    }
+  }
+
+  return table;
+}
+
+const parseTeamSummary = (summary: IterationSummary): string => {
+  let overallTable: string[][] = []
+
+  overallTable.push(['Type', 'Work Item', 'Title', 'Status', 'Assigned To']);
+
+  // Parse the epics in relation to this user
+  if (summary.topDownMap.Epic !== undefined && Object.keys(summary.topDownMap.Epic).length > 0) {
+    overallTable.push(...parseWorkItemTypeForTeam(summary.topDownMap['Epic'], summary));
+  }
+
+  if (summary.topDownMap["Key Result"] !== undefined && Object.keys(summary.topDownMap["Key Result"]).length > 0) {
+    overallTable.push(...parseWorkItemTypeForTeam(summary.topDownMap['Key Result'], summary));
+  }
+
+  // Put all the scenarios that weren't captured in the epics
+  if (summary.topDownMap["Scenario"] !== undefined && Object.keys(summary.topDownMap["Scenario"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Scenario"]).filter(key => summary.topDownMap["Scenario"]![key].parent === undefined);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Scenario"]![key];
+      });
+      overallTable.push(["", "[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForTeam(parentlessItemsMap, summary, 1));
+    }
+  }
+
+  // Put all the deliverables that weren't captured in the epics
+  if (summary.topDownMap["Deliverable"] !== undefined && Object.keys(summary.topDownMap["Deliverable"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Deliverable"]).filter(key => summary.topDownMap["Deliverable"]![key].parent === undefined);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Deliverable"]![key];
+      });
+      overallTable.push(["", "[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForTeam(parentlessItemsMap, summary, 2));
+    }
+  }
+
+  // Put all the tasks that weren't captured in the epics
+  if (summary.topDownMap["Task"] !== undefined && Object.keys(summary.topDownMap["Task"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Task"]).filter(key => summary.topDownMap["Task"]![key].parent === undefined);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Task"]![key];
+      });
+      console.log("Task", parentlessItems, parentlessItemsMap);
+      overallTable.push(["", "[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForTeam(parentlessItemsMap, summary, 3));
+    }
+  }
+
+  // Put all the tasks that weren't captured in the epics
+  if (summary.topDownMap["Bug"] !== undefined && Object.keys(summary.topDownMap["Bug"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Bug"]).filter(key => summary.topDownMap["Bug"]![key].parent === undefined);
+    if (parentlessItems.length > 0) {
+      let parentlessItemsMap: ItemsRelation = {};
+      parentlessItems.forEach(key => {
+        parentlessItemsMap[key] = summary.topDownMap["Bug"]![key];
+      });
+      console.log("Bug", parentlessItemsMap);
+      overallTable.push(["", "[Parentless]"]);
+      overallTable.push(...parseWorkItemTypeForTeam(parentlessItemsMap, summary, 3));
+    }
+  }
+
+
+  return markdownTable(overallTable, {
+    padding: false,
+    alignDelimiters: false
+  });
+};
+
 const App = (): JSX.Element => {
   const [searchParams, _setSearchParams] = useSearchParams()
   const [team, setTeam] = useState<string>()
@@ -306,6 +429,9 @@ const App = (): JSX.Element => {
 
     let finalReport: string = `# Sprint summary for ${summary.iteration.name} (${team})\n\n`;
 
+
+    finalReport += `## Team Summary\n\n${parseTeamSummary(summary)}\n\n`;
+
     console.log("Users: ", allUsers);
     for (const user of allUsers) {
       const userReport = parseUser(user, summary);
@@ -314,6 +440,8 @@ const App = (): JSX.Element => {
       }
       finalReport += `## ${user}\n${userReport}\n\n`;
     }
+
+    finalReport += `\n\n#### Generated on ${dayjs().format(`MM/DD/YYYY, hh:mma`)}`;
 
     console.log("Final report: ", finalReport);
 

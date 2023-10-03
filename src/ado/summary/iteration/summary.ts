@@ -115,6 +115,7 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
         title: workItem.fields["System.Title"],
         type: workItem.fields["System.WorkItemType"],
         state: workItem.fields["System.State"],
+        assignedTo: workItem.fields["System.AssignedTo"],
         tags: tags,
     }
 }
