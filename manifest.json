@@ -20,7 +20,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/pages/summary/index.html",
+        "src/pages/summary/iteration/index.html",
+        "src/pages/summary/daterange/index.html",
         "src/adostyles.css"
       ],
       "matches": [

@@ -3,16 +3,13 @@ import { AssignedToTag } from "../../../../models/ItemTag/AssignedTo";
 
 export const AssignedToParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags, extra) => {
     let assignedToTag: AssignedToTag = {
-        assignedTo: new Set<string>()            
+        assignedTo: []
     }
 
     let currentAssignedTo = workItem.fields["System.AssignedTo"].uniqueName ?? workItem.fields["System.AssignedTo"].displayName;
     let currentIteration = workItem.fields["System.IterationPath"];
 
-
-    if (currentIteration === extra.iteration.path) {
-        assignedToTag.assignedTo.add(currentAssignedTo);
-    }
+    assignedToTag.assignedTo.push(currentAssignedTo);
 
     for (const historyEvent of workItemHistoryEvents) {
         if (historyEvent.fields?.["System.AssignedTo"]?.newValue?.uniqueName || historyEvent.fields?.["System.AssignedTo"]?.newValue?.displayName) {
@@ -23,7 +20,9 @@ export const AssignedToParser: IterationItemParser = async (config, workItem, wo
         }
 
         if (currentIteration === extra.iteration.path) {
-            assignedToTag.assignedTo.add(currentAssignedTo);
+            if (!assignedToTag.assignedTo.includes(currentAssignedTo)) {
+                assignedToTag.assignedTo.push(currentAssignedTo);
+            }
         }
     }
 

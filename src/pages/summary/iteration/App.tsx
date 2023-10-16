@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { BellIcon } from "@heroicons/react/24/outline";
 import MDEditor from "@uiw/react-md-editor";
-import logoPath from "../../assets/icons/128.png";
-import { ItemRelation, ItemsRelation, IterationSummary } from "../../models/adoSummary";
+import logoPath from "../../../assets/icons/128.png";
+import { IterationSummary } from "../../../models/adoSummary";
 import { markdownTable } from 'markdown-table';
 import { useSearchParams } from "react-router-dom";
-import { GenerateIterationSummaryAction } from "../../models/actions";
-import { WorkItemType } from "../../models/adoApi";
+import { GenerateIterationSummaryAction } from "../../../models/actions";
+import { WorkItemType } from "../../../models/adoApi";
 import dayjs from "dayjs";
+import { ItemRelation, ItemsRelation } from "../../../models/adoSummary/item";
 
 
 const getIcon = (workItemType: string): string => {
@@ -20,7 +21,7 @@ const getIcon = (workItemType: string): string => {
     case 'Deliverable':
       return '🏆';
     case 'Task':
-      return '✅';
+      return '✔️';
     case 'Bug':
       return '🐜';
   }
@@ -84,7 +85,7 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: I
         status += "⬅️";
       }
 
-      if (tags.completedBy === user) {
+      if (tags.completedBy?.uniqueName === user) {
         status += "✅";
       } else if (tags.completedBy !== undefined) {
         status += "☑️";
@@ -430,7 +431,7 @@ const App = (): JSX.Element => {
     let finalReport: string = `# Sprint summary for ${summary.iteration.name} (${team})\n\n`;
 
 
-    finalReport += `## Team Summary\n\n${parseTeamSummary(summary)}\n\n`;
+    // finalReport += `## Team Summary\n\n${parseTeamSummary(summary)}\n\n`;
 
     console.log("Users: ", allUsers);
     for (const user of allUsers) {

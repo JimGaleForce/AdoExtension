@@ -1,5 +1,5 @@
 import { GetIterationFromURL } from "./ado/api";
-import { SummaryForIteration } from "./ado/summary";
+import { SummaryForDateRange, SummaryForIteration } from "./ado/summary";
 import { isBGAction } from "./models/actions";
 import { isValidConfig, initializeConfig } from "./models/adoConfig";
 
@@ -57,13 +57,19 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
     await chrome.tabs.create({
       active: true,
-      url: `src/pages/summary/index.html?team=${message.iteration.team}&iteration=${iteration.id}`
+      url: `src/pages/summary/iteration/index.html?team=${message.iteration.team}&iteration=${iteration.id}`
     });
       break;
     case 'GenerateIterationSummary':
-      let summary = await SummaryForIteration(message.team, message.iterationId)
+      let iterationSummary = await SummaryForIteration(message.team, message.iterationId)
       if (sender.tab?.id) {
-        chrome.tabs.sendMessage(sender.tab?.id, { summary })
+        chrome.tabs.sendMessage(sender.tab?.id, { summary: iterationSummary })
+      }
+      break;
+    case 'GenerateDateRangeSummary':
+      let dateRangeSummary = await SummaryForDateRange(message.from, message.to)
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab?.id, { summary: dateRangeSummary })
       }
       break;
   }

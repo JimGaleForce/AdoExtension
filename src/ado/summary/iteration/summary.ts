@@ -2,12 +2,12 @@ import dayjs from "dayjs";
 import { Iteration, WorkItem, WorkItemFields, WorkItemHistory, WorkItemType } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { IterationSummary } from "../../../models/adoSummary";
-import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration, TopDownMap } from "../../../models/adoSummary/iteration";
+import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetBatchItemDetails, GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, HistoryItemParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { CapacityParser } from "./parser/CapacityParser";
-import { ItemSummary } from "../../../models/adoSummary/item";
+import { ItemSummary, TopDownMap } from "../../../models/adoSummary/item";
 import { IgnoreParser } from "./parser/IgnoreParser";
 import { AssignedToParser } from "./parser/AssignedToParser";
 
@@ -115,7 +115,7 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
         title: workItem.fields["System.Title"],
         type: workItem.fields["System.WorkItemType"],
         state: workItem.fields["System.State"],
-        assignedTo: workItem.fields["System.AssignedTo"],
+        assignedTo: tags.completedBy ?? workItem.fields["System.AssignedTo"],
         tags: tags,
     }
 }
@@ -161,7 +161,7 @@ async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof Wo
         }
 
         // Handle assignment of users to items
-        const assignedToField = workItem?.fields["System.AssignedTo"];
+        const assignedToField = summary.workItems[itemId]?.tags.completedBy ?? workItem?.fields["System.AssignedTo"];
         const name = assignedToField?.uniqueName || assignedToField?.displayName;
         if (name && topDownMap[itemKey]?.[itemId]?.assignedTo && !topDownMap[itemKey]?.[itemId]?.assignedTo.includes(name)) {
             topDownMap[itemKey]![itemId]!.assignedTo.push(name);

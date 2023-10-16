@@ -1,4 +1,4 @@
-import { ItemParser, ItemSummary } from "./item";
+import { ItemParser, ItemSummary, TopDownMap } from "./item";
 import { Iteration, WorkItemResult, WorkItemType } from "../adoApi";
 import { WorkItemTags } from "../ItemTag";
 import { GetIteration, GetTeamValues } from "../../ado/api";
@@ -8,27 +8,6 @@ import { loadConfig } from "../adoConfig";
 export type IterationParserExtraData = {
     iteration: Iteration
 }
-
-type WorkItemReference = {
-    id: string
-    workItemType: WorkItemType
-}
-
-export type ItemRelation = {
-    assignedTo: string[]
-    title: string
-    type: WorkItemType
-    parent?: WorkItemReference
-    children?: WorkItemReference[]
-};
-
-export type ItemsRelation = {
-    [key: string]: ItemRelation
-};
-
-export type TopDownMap = {
-    [key in WorkItemType]?: ItemsRelation
-};
 
 // Get all work items that were ever in an iteration for a given area path
 export async function LoadWorkItemsForIteration(team: string, iterationId: string): Promise<WorkItemResult[]> {

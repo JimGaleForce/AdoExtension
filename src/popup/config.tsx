@@ -94,9 +94,9 @@ const Config = (): JSX.Element => {
 
     return (
         <form className="space-y-2 divide-y divide-gray-200">
-            <div className="space-y-4">
-                <div className="space-y-4">
-                    <div className="space-y-2">
+            <div className="space-y-2">
+                <div className="space-y-2">
+                    <div className="space-y-1">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Colors
