@@ -1,7 +1,7 @@
-import { IterationItemParser } from "../../../../models/adoSummary/iteration";
+import { DateRangeItemParser } from "../../../../models/adoSummary";
 import { WorkItemTypeTag } from "../../../../models/ItemTag/WorkItemTypeTag";
 
-export const WorkItemTypeParser: IterationItemParser = async (config, _workItem, workItemHistoryEvents, tags, _extra) => {
+export const WorkItemTypeParser: DateRangeItemParser = async (_config, _workItem, workItemHistoryEvents, tags, _extra) => {
   let workItemTypeTag: WorkItemTypeTag = {
     // @ts-ignore this may be an undefined work item type, but that's okay
     workItemType: _workItem.fields["System.WorkItemType"]

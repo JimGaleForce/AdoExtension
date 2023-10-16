@@ -1,15 +1,14 @@
 import { BaseTag } from "./BaseTag"
 
 export type ReassignedTimeline = {
-    date: string
-    toMe: boolean
-    fromMe: boolean
+    from: string
+    to: string
 }
 
 export type ReassignedTag = BaseTag & {
     reassigned: {
-        toMe: boolean,
-        fromMe: boolean
+        from: Set<string>,
+        to: string
         timeline: ReassignedTimeline[]
     }
 }

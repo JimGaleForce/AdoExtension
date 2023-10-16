@@ -4,6 +4,33 @@ export type Href = {
     href: string
 }
 
+export type TeamFieldValues = {
+    field: {
+        referenceName: string
+        url: string
+    },
+    defaultValue: string
+    values: {
+        value: string
+        includeChildren: boolean   
+    }[],
+    url: string,
+    links: {
+        self: Href,
+        project: Href,
+        team: Href,
+        teamSettings: Href,
+        areaPathClassificationNodes: Href
+    }
+}
+
+export type IterationFromURL = {
+    organization: string
+    project: string
+    team: string
+    iteration: string
+}
+
 export type Iteration = {
     id: string
     name: string
@@ -32,6 +59,26 @@ export type ListIteration = {
     value: Iteration[]
 }
 
+export type WiqlQueryType = "workitems" | "workitemLinks";
+export type WorkItemsResult = {
+    asOf: string,
+    columns: {
+        referenceName: string,
+        name: string,
+        url: string
+    }[],
+    queryResultType: WiqlQueryType,
+    queryType: string,
+    workItems: WorkItemResult[]
+}
+
+export type WorkItemResult = {
+    id: string,
+    url: string
+}
+
+export type WorkItemLinksResult = {
+}
 
 export type WorkItemRelation = {
     rel: undefined | null | string
@@ -55,6 +102,7 @@ export type IterationWorkItems = {
 }
 
 export type WorkItemState = 
+    | "Active"
     | "Committed"
     | "Completed"
     | "Cut"
@@ -87,15 +135,12 @@ export type AdoUser = {
 }
 
 export type WorkItemFields = {
-    // Catch all as there can always be custom fields
-    // [key: string]: unknown
-
     "System.Id": number
     "System.AreaPath": string
     "System.TeamProject": string
     "System.IterationPath": string
-    "System.WorkItemType": WorkItemType | string
-    "System.State": WorkItemState | string // different orgs might have different states
+    "System.WorkItemType": WorkItemType
+    "System.State": WorkItemState
     "System.Reason": string
     "System.AssignedTo": AdoUser
     "System.CreatedDate": string
@@ -107,15 +152,19 @@ export type WorkItemFields = {
     "System.Title": string
     "System.IsDeleted": boolean
 
+    "System.Parent"?: number
     "Microsoft.VSTS.Scheduling.OriginalEstimate"?: number
+    "Microsoft.VSTS.Scheduling.RemainingWork"?: number
     "OSG.RemainingDays"?: number
+    "OSG.RemainingDevDays"?: number
     "OSG.Cost"?: number
 }
 
-export type WorkItem = {
+
+export type WorkItem<T extends keyof WorkItemFields = keyof WorkItemFields> = {
     id: number
     rev: number
-    fields: WorkItemFields
+    fields: Pick<WorkItemFields, T>
     _links: {
         self?: Href
         workItemUpdates?: Href

@@ -1,24 +1,36 @@
-declare var dataProviders: any;
 let generateButton;
 
-type Iteration = {
-  id: string
-  friendlyPath: string
-}
+function parseURL(): { organization: string, project: string, team: string, iteration: string } {
+  // Grab the current page's url
+  const url = new URL(window.location.href);
 
-const getSelectedIteration: () => Iteration = () => {
+  // Parse the URL and split by '/'
+  const pathParts = url.pathname.split('/').filter(part => part);
+
+  if (pathParts.length < 7) {
+      throw new Error('Unexpected URL format!');
+  }
+
+  // Extract parts of the URL
+  const organization = url.hostname.split('.')[0];
+  const project = pathParts[0];
+  const team = decodeURIComponent(pathParts[3]);
+  const iteration = decodeURIComponent(pathParts[6]);
+
   return {
-    id: dataProviders.data["ms.vss-work-web.new-sprints-hub-taskboard-data-provider"].iterationId,
-    friendlyPath: dataProviders.data["ms.vss-work-web.new-sprints-hub-taskboard-data-provider"].iterationPath
+      organization,
+      project,
+      team,
+      iteration
   };
 }
 
 async function createSummary() {
-  const iteration = getSelectedIteration();
-  console.log(`Creating summary for ${iteration.id}...`);
+  const data = parseURL();
+  console.log(`Creating summary for ${data.iteration}...`);
   document.dispatchEvent(new CustomEvent('getSummaryForIteration',
     {
-      detail: iteration
+      detail: data
     }));
 }
 

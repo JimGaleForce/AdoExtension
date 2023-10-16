@@ -92,12 +92,13 @@ export class Proposed {
     this.updateCounts();
     setTimeout(() => this.ic_checkForChanges(), this.ic_time);
   
-    //mod ui
-    var table = document.querySelectorAll(".grouped-progress-control > div > div");
+    // Table represents all elements on the sidebar that encompass the capacity of a person.
+    var table = document.querySelectorAll("td > .bolt-list-cell-content > div:has(div.work-details-progress-bar-container)");
     if (table.length > 0) {
       for (var i = 0; i < table.length; i++) {
         var item = table[i];
-        var nameitem = item.querySelector(".identity-picker-resolved-name");
+        // For each element, grab the name of the person.
+        var nameitem = item.querySelector("div > div > div");
         this.updateBars(nameitem, item)
       }
     }
@@ -116,7 +117,8 @@ export class Proposed {
     if (nameitem) {
       var name = nameitem.innerText;
       if (name) {
-        var current = item.querySelector(".visual-progress-total");
+        // visual-progress-total is the black bar that represents the total capacity of a person.
+        var current = item.querySelector(".work-details-total-mark");
         if (current) {
           for (var j = 0; j < this._tfs_counts.length; j++) {
             var tfsitem = this._tfs_counts[j];
@@ -149,15 +151,15 @@ export class Proposed {
               }
               existingBugs.setAttribute('style', 'width: ' + bugPercent + "%; background-color: purple; float: left; height: 18px; opacity: 0.75");
   
-              var existingUnder = item.querySelector(".visual-progress-underallocated");
+              var existingUnder = item.querySelector(".under-capacity");
               if (existingUnder) {
                 existingUnder.appendChild(existingProposed);
                 existingUnder.appendChild(existingBugs);
               } else {
-                var existingOver = item.querySelector(".visual-progress-total.visual-progress-overallocated");
+                var existingOver = item.querySelector(".over-capacity");
                 if (existingOver && existingOver.parentNode) {
-                  existingOver.parentNode.insertBefore(existingProposed, existingOver);
-                  existingOver.parentNode.insertBefore(existingBugs, existingOver);
+                  existingOver.insertBefore(existingProposed, existingOver.firstChild);
+                  existingOver.insertBefore(existingBugs, existingOver.firstChild);
                 }
               }
   
@@ -166,7 +168,7 @@ export class Proposed {
                 existingMissing.parentNode.removeChild(existingMissing);
               }
   
-              var container = item.querySelector(".visual-progress-container");
+              var container = item.querySelector("div:not([class]):not(:has(div))");
               if (tfsitem.missing > 0) {
                 existingMissing = document.createElement("div");
                 existingMissing.setAttribute('class', 'progress-text-missing');
@@ -269,7 +271,7 @@ export class Proposed {
     }
 
     const url = decodeURIComponent(document.URL);
-    const currentIteration = this.iterations.filter(i=> url.endsWith(i.path.replace(/\\/g,'/')));
+    const currentIteration = this.iterations.filter(i=> url.indexOf(i.path.replace(/\\/g,'/')) !== -1);
     
     if (currentIteration.length === 0 ) {
       return;

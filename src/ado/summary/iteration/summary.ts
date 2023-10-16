@@ -1,25 +1,30 @@
 import dayjs from "dayjs";
-import { Iteration, WorkItemHistory } from "../../../models/adoApi";
+import { Iteration, WorkItem, WorkItemFields, WorkItemHistory, WorkItemType } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
-import { GetWorkItemsFromStorageByIteration, ItemSummary, IterationSummary } from "../../../models/adoSummary";
-import { IterationItemParser, IterationParserExtraData } from "../../../models/adoSummary/iteration";
+import { IterationSummary } from "../../../models/adoSummary";
+import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
-import { GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
-import { CompletedParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
-import { TitleParser } from "./parser/TitleParser";
+import { GetBatchItemDetails, GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
+import { CompletedParser, HistoryItemParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { CapacityParser } from "./parser/CapacityParser";
+import { ItemSummary, TopDownMap } from "../../../models/adoSummary/item";
+import { IgnoreParser } from "./parser/IgnoreParser";
+import { AssignedToParser } from "./parser/AssignedToParser";
 
+// Parsers are ran sequentially
 const IterationSummaryParser: IterationItemParser[] = [
-    TitleParser,
+    IgnoreParser,
+    AssignedToParser,
     ReassignedParser,
     CompletedParser,
     IterationTrackerParser,
     WorkItemTypeParser,
-    CapacityParser
+    CapacityParser,
+    HistoryItemParser,
 ]
 
-// Generates a proper ADO Summary for a given iteration
-export async function SummaryForIteration(iterationId: string) {
+// Generates a proper ADO Summary for a given team and iteration
+export async function SummaryForIteration(team: string, iterationId: string) {
     // Get all items from the specified iteration.
     // For each item:
     // - Get state of item as it was during the start of the specified iteration
@@ -33,32 +38,38 @@ export async function SummaryForIteration(iterationId: string) {
     const config = await loadConfig();
 
     // First - get data about specified iteration (start date / end date)
-    const iteration = await GetIteration(config, iterationId);
-    const workItemIds = await GetWorkItemsFromStorageByIteration(iterationId);
+    const iteration = await GetIteration(config, iterationId, team);
+    const workItems = await LoadWorkItemsForIteration(team, iterationId);
 
     const { startDate, finishDate } = iteration.attributes;
 
     let summary: IterationSummary = {
         iteration: iteration,
-        workItems: []
+        workItems: {},
+        topDownMap: {}
     }
 
     // We could potentially do a map on `workItemIds` to proceess items
     // in parallel. This was not initially done due to concerns of hitting
     // API limits.
-    for (const workItemId of workItemIds) {
-        const itemSummary = await parseWorkItem(config, iteration, workItemId, startDate, finishDate);
+    for (const workItem of workItems) {
+        const itemSummary = await parseWorkItem(config, iteration, workItem.id, startDate, finishDate);
         if (itemSummary !== null) {
-            summary.workItems.push(itemSummary);
+            summary.workItems[itemSummary.id] = itemSummary;
         }
     }
 
-    console.log("Summary Done.")
+    console.log("Summary Done. Creating map")
+    console.log(summary);
+
+    summary = await MapOutWorkItems(summary);
+
+    console.log("Map Done. Returning completedsummary")
     console.log(summary);
     return summary;
 }
 
-async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: number, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
+async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: string, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
 
@@ -68,7 +79,6 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     } catch {
         return null;
     }
-
 
     if (workItemHistory.count === 0 || !workItemHistory.value[0].fields?.["System.AuthorizedDate"]?.newValue) {
         console.warn(`No history for item ${workItemId}. Skipping`);
@@ -87,20 +97,12 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     }
 
     let tags: Partial<WorkItemTags> = {}
+
     // Ignore any events that occured outside of our desired timeframe
     const relevantHistoryEvents = workItemHistory.value.filter(historyEvent => {
         const revisedDate = dayjs(historyEvent.fields?.["System.AuthorizedDate"]?.newValue ?? historyEvent.fields?.["System.ChangedDate"]?.newValue)
         return revisedDate.isAfter(startDate) && revisedDate.isBefore(finishDate)
     });
-
-    // Ignore this work item if not relevant to us
-    if (
-        workItem.fields["System.AssignedTo"].uniqueName !== config.email &&
-        !(relevantHistoryEvents.some(
-            historyEvent => historyEvent.fields?.["System.AssignedTo"]?.newValue.uniqueName === config.email
-        ))) {
-        return null;
-    }
 
     // Parse the work item using all parsers defined in the IterationSummaryParser.
     // The parser will update the `workItemSummary.tags` object directly
@@ -111,6 +113,140 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     return {
         id: workItemId,
         title: workItem.fields["System.Title"],
-        tags: tags
+        type: workItem.fields["System.WorkItemType"],
+        state: workItem.fields["System.State"],
+        assignedTo: tags.completedBy ?? workItem.fields["System.AssignedTo"],
+        tags: tags,
     }
+}
+
+const fields: (keyof WorkItemFields)[] = [
+    "System.Id",
+    "System.Title",
+    "System.WorkItemType",
+    "System.AssignedTo",
+    "System.AreaPath",
+    "System.Parent"
+]
+
+
+async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof WorkItemFields>[], summary: IterationSummary): Promise<IterationSummary> {
+    const { topDownMap } = summary;
+
+    // Fetch and parse parent items
+    const parentIds = [...new Set(workItems.map(x => x.fields["System.Parent"]).filter(Boolean).map(String))];
+    let parsedParents: WorkItem<keyof WorkItemFields>[] = [];
+
+    if (parentIds.length > 0) {
+        console.log("Getting parents of these items");
+        parsedParents = await GetBatchItemDetails(config, parentIds, fields);
+        parsedParents = parsedParents.filter(x => x) as WorkItem<keyof WorkItemFields>[];
+        summary = await ParseItemType(config, parsedParents, summary);
+    }
+
+    for (const workItem of workItems) {
+        const itemKey = workItem.fields["System.WorkItemType"] as WorkItemType;
+        const itemId = String(workItem.id);
+        
+        // Ensure current item is defined in the map
+        if (!topDownMap[itemKey]) {
+            topDownMap[itemKey] = {};
+        }
+        if (!topDownMap[itemKey]?.[itemId]) {
+            topDownMap[itemKey]![itemId] = {
+                title: workItem.fields["System.Title"],
+                type: itemKey,
+                assignedTo: []
+            };
+        }
+
+        // Handle assignment of users to items
+        const assignedToField = summary.workItems[itemId]?.tags.completedBy ?? workItem?.fields["System.AssignedTo"];
+        const name = assignedToField?.uniqueName || assignedToField?.displayName;
+        if (name && topDownMap[itemKey]?.[itemId]?.assignedTo && !topDownMap[itemKey]?.[itemId]?.assignedTo.includes(name)) {
+            topDownMap[itemKey]![itemId]!.assignedTo.push(name);
+        } else if (!name) {
+            console.warn(`Work item ${workItem.id} has no assigned user`, workItem);
+        }
+
+        // Handle parents and children relationships
+        if (workItem.fields["System.Parent"]) {
+            const parent = String(workItem.fields["System.Parent"]);
+            const parentType = parsedParents.find(x => String(x.id) === parent)?.fields["System.WorkItemType"];
+
+            topDownMap[itemKey]![itemId]!.parent = {
+                id: parent,
+                workItemType: parentType as WorkItemType
+            };
+            
+
+            if (parentType && topDownMap[parentType]) {
+                const currentParent = topDownMap[parentType]?.[parent];
+                if (currentParent) {
+                    currentParent.children = currentParent.children || [];
+                    if (!currentParent.children.some(x => x.id === itemId)) {
+                        currentParent.children.push({ id: itemId, workItemType: itemKey });
+                    }
+
+                    // Propagate the 'assignedTo' list up the tree
+                    propagateAssignedTo(topDownMap, itemKey, itemId, parent, parentType);
+                }
+            }
+        }
+    }
+
+    return summary;
+}
+
+function propagateAssignedTo(topDownMap: TopDownMap, itemKey: WorkItemType, itemId: string, parent: string | undefined, parentType: WorkItemType | undefined) {
+    const currentItem = topDownMap[itemKey] && topDownMap[itemKey]![itemId];
+    const assignedToList = currentItem ? currentItem.assignedTo : [];
+    while (parent && parentType) {
+        const currentParentItem = topDownMap[parentType]?.[parent];
+        if (!currentParentItem) break;
+
+        for (const assignedTo of assignedToList) {
+            if (!currentParentItem.assignedTo.includes(assignedTo)) {
+                currentParentItem.assignedTo.push(assignedTo);
+            }
+        }
+
+        parent = currentParentItem.parent?.id ? String(currentParentItem.parent.id) : undefined;
+        parentType = currentParentItem.parent?.workItemType;
+    }
+}
+
+// Given the finalized summary, finalize the top down map.
+// This gives us the parents of all items in the summary until we hit either a key result or an epic.
+// From here, we are able to generate a summary table starting from the Epic / K/R Level.
+async function MapOutWorkItems(summary: IterationSummary): Promise<IterationSummary> {
+    const config = await loadConfig();
+
+    const workItemTypes: WorkItemType[] = ["Bug", "Task", "Deliverable", "Scenario", "Epic", "Key Result"];
+
+    const promises = workItemTypes.map(async (workItemType) => {
+        let items = [];
+        console.log("Getting all items of type: ", workItemType);
+        for (const key in summary.workItems) {
+            const workItem = summary.workItems[key];
+            if (workItem.tags?.workItemType === workItemType && !workItem.tags?.ignore) {
+                items.push(workItem.id);
+            }
+        }
+
+        if (items.length === 0) {
+            console.log("No items of type: ", workItemType);
+            return;
+        }
+
+        console.log(`Getting iteam information of all ${workItemType} (like parents)`);
+        const itemsParsed = await GetBatchItemDetails(config, items, fields);
+        console.log(`Parsing ${workItemType}s`);
+        summary = await ParseItemType(config, itemsParsed, summary);
+    });
+
+    await Promise.all(promises);
+
+    console.log("Done parsing all items");
+    return summary;
 }

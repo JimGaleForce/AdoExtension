@@ -1,7 +1,7 @@
-import { GetItemsFromIteration, GetIterations } from "./ado/api";
+import { GetIterationFromURL } from "./ado/api";
 import { SummaryForDateRange, SummaryForIteration } from "./ado/summary";
 import { isBGAction } from "./models/actions";
-import { loadConfig, isValidConfig, initializeConfig } from "./models/adoConfig";
+import { isValidConfig, initializeConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
 
@@ -18,40 +18,6 @@ chrome.runtime.onMessage.addListener(
     return true;
   }
 );
-
-const loadIteration = async (iterationId: string) => {
-  const config = await loadConfig();
-  const itemsJson = await GetItemsFromIteration(config, iterationId);
-  const currentItemIds = itemsJson.workItemRelations.map((item: any) => item.target.id);
-
-  const data = await chrome.storage.sync.get([iterationId]);
-  const pastItemIds = data[iterationId] ?? [];
-
-  // Remove duplicate item ids and then store.
-  chrome.storage.sync.set({[iterationId]:[...new Set(currentItemIds.concat(pastItemIds))]});
-}
-
-
-const loadLatestIteration = async () => {
-  const config = await loadConfig();
-
-  const iterationsJson = await GetIterations(config, true);
-  const currentIterationId = iterationsJson.value[0].id;
-
-  loadIteration(currentIterationId);
-}
-
-chrome.alarms.create(
-  {
-    periodInMinutes: 1440 // once every day
-  }
-)
-
-chrome.alarms.onAlarm.addListener(
-  async function(alarm) {
-    await loadLatestIteration();
-  }
-)
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
@@ -79,22 +45,34 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       return;
     }
 
+    // Get iteration
+    const iteration = await GetIterationFromURL(message.iteration);
+
+    if (iteration === undefined) {
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab.id, { error: 'Unable to get iteration information' })
+      } 
+      return;
+    }
+
     await chrome.tabs.create({
       active: true,
-      url: `src/pages/summary/index.html?iteration=${message.iteration.id}`
+      url: `src/pages/summary/iteration/index.html?team=${message.iteration.team}&iteration=${iteration.id}`
     });
       break;
     case 'GenerateIterationSummary':
-      await loadIteration(message.iterationId);
-
-      let summary = await SummaryForIteration(message.iterationId)
+      let iterationSummary = await SummaryForIteration(message.team, message.iterationId)
       if (sender.tab?.id) {
-        chrome.tabs.sendMessage(sender.tab?.id, { summary })
+        chrome.tabs.sendMessage(sender.tab?.id, { summary: iterationSummary })
+      }
+      break;
+    case 'GenerateDateRangeSummary':
+      let dateRangeSummary = await SummaryForDateRange(message.from, message.to)
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab?.id, { summary: dateRangeSummary })
       }
       break;
   }
 });
 
-initializeConfig()
-  .then(() => SummaryForDateRange(new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 2), new Date()));
-  // .then(() => loadLatestIteration());
+initializeConfig();

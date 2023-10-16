@@ -89,9 +89,10 @@ async function highLine() {
 
   // get rows from backlog, or tiles from taskboard
   let cellClass = 'bolt-list-cell';
-  var rows = document.getElementsByClassName('bolt-list-row');
+  const pageContent = document.getElementsByClassName('page-content')[0];
+  var rows = pageContent.getElementsByClassName('bolt-list-row');
   if (rows.length === 0) {
-    rows = document.getElementsByClassName('taskboard-card');
+    rows = pageContent.getElementsByClassName('taskboard-card');
     if (rows.length > 0) {
       cellClass = 'field-container';
     }

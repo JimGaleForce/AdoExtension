@@ -1,7 +1,7 @@
-import { IterationItemParser } from "../../../../models/adoSummary/iteration";
 import { CompletedTag } from "../../../../models/ItemTag/CompletedTag";
+import { DateRangeItemParser } from "../../../../models/adoSummary";
 
-export const CompletedParser: IterationItemParser = async (config, workItem, workItemHistoryEvents, tags, _extra) => {
+export const CompletedParser: DateRangeItemParser = async (_config, workItem, workItemHistoryEvents, tags, _extra) => {
     let completedBy = null;
     let addTag = false;
     let assignedTo = workItem.fields["System.AssignedTo"]

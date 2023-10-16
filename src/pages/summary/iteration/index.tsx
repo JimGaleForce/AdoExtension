@@ -6,7 +6,7 @@ import "./tailwind.css";
 
 const router = createBrowserRouter([
   {
-    path: "src/pages/summary/index.html",
+    path: "src/pages/summary/iteration/index.html",
     element: <App />,
   },
 ]);

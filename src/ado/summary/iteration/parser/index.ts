@@ -1,4 +1,5 @@
 export * from './CompletedParser'
 export * from './IterationTrackerParser'
+export * from './HistoryItemParser'
 export * from './ReassignedParser'
 export * from './WorkItemTypeParser'

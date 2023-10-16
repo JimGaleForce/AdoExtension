@@ -1,5 +1,6 @@
+import { AdoUser } from "../adoApi"
 import { BaseTag } from "./BaseTag"
 
 export type CompletedTag = BaseTag & {
-    completedByMe: boolean
+    completedBy: AdoUser
 }
