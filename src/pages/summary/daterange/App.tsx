@@ -44,7 +44,11 @@ const parseWorkItemType = (items: ItemsRelation, summary: DateRangeSummary, inde
     const item = items[key];
 
     let row: string[] = [];
-    row.push(item.type, `${prefix} ${getIcon(item.type)}${item.title.replaceAll("|", "\\|")}`);
+    row.push(
+      item.type,
+      `[${key}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${key})`,
+       `${prefix} ${getIcon(item.type)}${item.title.replaceAll("|", "\\|")}`
+    );
 
     if (key in summary.workItems) {
       // Add the status if it exists
@@ -102,7 +106,7 @@ const parseSummary = (summary: DateRangeSummary): string => {
   console.log("PARSING");
   let overallTable: string[][] = []
 
-  overallTable.push(['Type', 'Title', 'Status']);
+  overallTable.push(['Type', 'ID', 'Title', 'Status']);
 
   // Parse the epics in relation to this user
   if (summary.topDownMap.Epic !== undefined && Object.keys(summary.topDownMap.Epic).length > 0) {

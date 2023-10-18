@@ -2,10 +2,12 @@ import { useState } from 'react';
 import Config from './config';
 import Report from './report';
 import Tabs from './tabs';
+import Tools from './tools';
 
 const tabs = [
  "Report",
- "Config"
+ "Config",
+ "Tools"
 ]
 
 const App = (): JSX.Element => {
@@ -19,6 +21,7 @@ const App = (): JSX.Element => {
         <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
         {activeTab === "Report" && (<Report/>)}
         {activeTab === "Config" && (<Config/>)}
+        {activeTab === "Tools" && (<Tools/>)}
       </div>
     </div>
   )

@@ -1,3 +1,11 @@
+type StringKeys<T> = Extract<keyof T, string>;
+
+export type Patch<T> = {
+    op: 'add' | 'remove' | 'replace'
+    path: `/fields/${StringKeys<T>}`;
+    value: any
+}
+
 export type Timeframe = "past" | "current" | "future"
 
 export type Href = {
@@ -59,6 +67,38 @@ export type ListIteration = {
     value: Iteration[]
 }
 
+export enum BacklogId {
+    "Scenarios and Impediments" = "OSG.ScenarioCategory",
+    "Epics and Key Results" = "Microsoft.FeatureCategory",
+    "Customer Promises and Objectives" = "OSG.CustomerPromiseCategory",
+    "Deliverables" = "Microsoft.RequirementCategory",
+    "Tasks" = "Microsoft.TaskCategory",
+}
+
+export type BacklogWorkItemType = {
+    name: string
+    url: string
+}
+
+export type Backlog = {
+    id: string
+    name: string
+    rank: number
+    isHidden: boolean
+    workItemCountLimit: number
+    type: string
+    workItemTypes: BacklogWorkItemType[]
+}
+
+export type BacklogList = {
+    count: number
+    value: Backlog[]
+}
+
+export type BacklogWorkItems = {
+    workItems: WorkItemRelation[]
+}
+
 export type WiqlQueryType = "workitems" | "workitemLinks";
 export type WorkItemsResult = {
     asOf: string,
@@ -85,7 +125,7 @@ export type WorkItemRelation = {
     source: undefined | null | string
     target: {
         id: number
-        url: string
+        url: null | string
     }
 
 }

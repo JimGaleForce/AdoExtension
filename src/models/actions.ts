@@ -17,10 +17,15 @@ export type GenerateDateRangeSummaryAction = {
     to: string
 }
 
+export type RenumberBacklogAction = {
+    action: 'RenumberBacklog'
+}
+
 export type BGAction =
     | OpenIterationSummaryAction
     | GenerateIterationSummaryAction
     | GenerateDateRangeSummaryAction
+    | RenumberBacklogAction
 
 export function isBGAction(item: any): item is BGAction {
     if ((item as BGAction).action) {

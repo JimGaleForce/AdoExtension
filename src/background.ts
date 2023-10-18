@@ -1,7 +1,8 @@
-import { GetIterationFromURL } from "./ado/api";
+import renumberBacklog from "./actions/renumberBacklog";
+import { ExtractProject, ExtractTeam, GetBacklogWorkItemsById, GetBacklogs, GetIterationFromURL } from "./ado/api";
 import { SummaryForDateRange, SummaryForIteration } from "./ado/summary";
 import { isBGAction } from "./models/actions";
-import { isValidConfig, initializeConfig } from "./models/adoConfig";
+import { isValidConfig, initializeConfig, loadConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
 
@@ -30,6 +31,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (validConfig === false) {
     if (sender.tab?.id) {
       chrome.tabs.sendMessage(sender.tab.id, { error: 'Invalid ADO Power Tools Config' })
+    } else {
+      alert('Invalid ADO Power Tools Config');
     }
     return;
   }
@@ -70,8 +73,31 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       let dateRangeSummary = await SummaryForDateRange(message.from, message.to)
       if (sender.tab?.id) {
         chrome.tabs.sendMessage(sender.tab?.id, { summary: dateRangeSummary })
-      }
+    }
       break;
+    case 'RenumberBacklog':
+      chrome.notifications.create("renumber-start", {
+        iconUrl: "src/assets/icons/128.png",
+        message: "Starting renumbering...",
+        title: "Renumbering backlog",
+        type: "basic"
+      }, undefined);
+      let renumberResult = await renumberBacklog();
+      if (renumberResult) {
+        chrome.notifications.create("renumber-end", {
+          iconUrl: "src/assets/icons/128.png",
+          message: "Renumbering completed!",
+          title: "Renumbering backlog",
+          type: "basic"
+        }, undefined);
+      } else {
+        chrome.notifications.create("renumber-end", {
+          iconUrl: "src/assets/icons/128.png",
+          message: "Error renumbering backlog!",
+          title: "Renumbering backlog",
+          type: "basic"
+        }, undefined);
+      }
   }
 });
 

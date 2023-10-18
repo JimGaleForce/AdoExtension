@@ -1,8 +1,7 @@
-import { BatchWorkItems, Iteration, IterationFromURL, IterationWorkItems, ListIteration, TeamFieldValues, WorkItem, WorkItemFields, WorkItemHistory } from "../../models/adoApi";
+import { BacklogList, BacklogWorkItems, BatchWorkItems, Iteration, IterationFromURL, IterationWorkItems, ListIteration, Patch, TeamFieldValues, WorkItem, WorkItemFields, WorkItemHistory } from "../../models/adoApi";
 import { AdoConfigData } from "../../models/adoConfig";
 
-
-async function fetchWithTimeout(url: string, timeout: number = 10000) {
+async function fetchWithTimeout(url: string, timeout: number = 30000) {
   const controller = new AbortController();
   const signal = controller.signal;
 
@@ -98,6 +97,48 @@ export async function postWithAuth(url: string, body: any, retry: number = 0): P
       // JSON parse error indicates unauthenticated request
       await authenticate(url);
       return postWithAuth(url, body, retry + 1);
+    } else {
+      throw error;
+    }
+  }
+}
+
+export async function patch(url: string, body: any, timeout: number = 30000): Promise<Response> {
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  // Set a timeout of 30 seconds
+  const timeoutId = setTimeout(() => {
+    controller.abort(); // Abort the fetch request
+    console.log('Request timed out');
+  }, timeout);
+
+  const response = await fetch(url, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json-patch+json' },
+    signal: controller.signal
+  });
+
+  clearTimeout(timeoutId);
+  return response;
+}
+
+export async function patchWithAuth(url: string, body: any, retry: number = 0): Promise<any> {
+  try {
+    const response = await patch(url, body);
+    if (!response.ok) {
+      console.error(await response.json());
+      throw new Error("Error patching to ADO");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof SyntaxError && retry < 3) {
+      console.error(`JSON Parse error. Attempting to authenticate. Retry ${retry + 1} / 3`);
+      // JSON parse error indicates unauthenticated request
+      await authenticate(url);
+      return patchWithAuth(url, body, retry + 1);
     } else {
       throw error;
     }
@@ -216,6 +257,42 @@ export function ExtractTeam(config: AdoConfigData) {
   return config && config.projectPath ? config.projectPath.substring(config.projectPath.lastIndexOf('/') + 1) : '';
 }
 
+
+export async function GetBacklogs(
+  organization: string,
+  project: string,
+  team: string): Promise<BacklogList> {
+  const url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/backlogs?api-version=7.0`
+
+  const json = await fetchWithAuth(url);
+
+  // If we get an error (i.e. Work item does not exist)
+  if (json.message) {
+    console.error(`Error getting backlogs`)
+    throw new Error(json.message);
+  }
+
+  return json as BacklogList;
+}
+
+export async function GetBacklogWorkItemsById(
+  organization: string,
+  project: string,
+  team: string,
+  backlogId: string): Promise<BacklogWorkItems> {
+  const url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/backlogs/${backlogId}/workItems?api-version=7.0`
+
+  const json = await fetchWithAuth(url);
+
+  // If we get an error (i.e. Work item does not exist)
+  if (json.message) {
+    console.error(`Error getting items from backlog ${backlogId}`)
+    throw new Error(json.message);
+  }
+
+  return json as BacklogWorkItems;
+}
+
 export async function GetItemsFromIteration(
   config: AdoConfigData,
   iterationId: string): Promise<IterationWorkItems> {
@@ -223,7 +300,7 @@ export async function GetItemsFromIteration(
   const project = ExtractProject(config);
   const { organization } = config;
 
-  const url = `https://dev.azure.com/${organization}/${project}_apis/work/teamsettings/iterations/${iterationId}/workitems?api-version=7.0`
+  const url = `https://dev.azure.com/${organization}/${project}/_apis/work/teamsettings/iterations/${iterationId}/workitems?api-version=7.0`
 
   const json = await fetchWithAuth(url);
 
@@ -306,6 +383,22 @@ export async function GetWorkItem(config: AdoConfigData, workItemId: string, asO
   // If we get an error (i.e. Work item does not exist at the specified datetime)
   if (json.message) {
     console.error(`Error getting work item ${workItemId} (as of ${asOf})`)
+    throw new Error(json.message);
+  }
+
+  return json as WorkItem;
+}
+
+export async function UpdateWorkItem(config: AdoConfigData, workItemId: string, operations: Patch<WorkItemFields>[]) {
+  const project = ExtractProject(config);
+  const { organization } = config;
+
+  const url = `https://dev.azure.com/${organization}/${project}/_apis/wit/workitems/${workItemId}?api-version=7.0`
+
+  console.log(`Updating ${workItemId} with ${operations[0].value}`);
+  const json = await patchWithAuth(url, operations);
+  if (json.message) {
+    console.error(`Error getting work item ${workItemId}`)
     throw new Error(json.message);
   }
 
