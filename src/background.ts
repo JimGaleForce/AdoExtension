@@ -70,7 +70,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       }
       break;
     case 'GenerateDateRangeSummary':
-      let dateRangeSummary = await SummaryForDateRange(message.from, message.to)
+      let dateRangeSummary = await SummaryForDateRange(message.from, message.to, message.teamReport)
       if (sender.tab?.id) {
         chrome.tabs.sendMessage(sender.tab?.id, { summary: dateRangeSummary })
     }

@@ -6,7 +6,6 @@ import { DateRangeSummary } from "../../../models/adoSummary";
 import { markdownTable } from 'markdown-table';
 import { useSearchParams } from "react-router-dom";
 import { GenerateDateRangeSummaryAction } from "../../../models/actions";
-import { WorkItemType } from "../../../models/adoApi";
 import dayjs from "dayjs";
 import { ItemsRelation } from "../../../models/adoSummary/item";
 
@@ -182,6 +181,7 @@ const App = (): JSX.Element => {
   const [searchParams, _setSearchParams] = useSearchParams()
   const [from, setFrom] = useState<string>()
   const [to, setTo] = useState<string>()
+  const [teamReport, setTeamReport] = useState<boolean>(false)
   const [summary, setSummary] = useState<DateRangeSummary>()
   const [value, setValue] = useState("**No date range specified; Waiting...**");
   const [loaded, setLoaded] = useState<boolean>()
@@ -223,10 +223,18 @@ const App = (): JSX.Element => {
       setTo(newTo ?? undefined);
       setGenerateRequestSent(false)
     }
-  }, [from, to, searchParams]);
+
+    let newTeamReport = searchParams.get('teamReport')?.trim().toLocaleLowerCase() === 'true';
+    if (teamReport !== newTeamReport) {
+      setTeamReport(newTeamReport);
+      setGenerateRequestSent(false)
+    }
+  }, [from, to, teamReport, searchParams]);
 
   useEffect(() => {
-    if (!from || from === null || !to || to === null || generateRequestSent) {
+    if (!from || from === null ||
+      !to || to === null ||
+      generateRequestSent) {
       return;
     }
 
@@ -236,10 +244,11 @@ const App = (): JSX.Element => {
     const action: GenerateDateRangeSummaryAction = {
       action: 'GenerateDateRangeSummary',
       from: from,
-      to: to
+      to: to,
+      teamReport: teamReport
     }
     chrome.runtime.sendMessage(action, (resp) => { });
-  }, [from, to, generateRequestSent]);
+  }, [from, to, teamReport, generateRequestSent]);
 
   useEffect(() => {
     if (!summary) {
@@ -248,6 +257,9 @@ const App = (): JSX.Element => {
     }
 
     let finalReport: string = `# Date range summary from ${dayjs(summary.startDate).format("MM/DD/YYYY")} to ${dayjs(summary.endDate).format("MM/DD/YYYY")}\n\n`;
+    if (teamReport) { 
+      finalReport += `## Team Summary\n\n`;
+    }
 
     finalReport += `${parseSummary(summary)}\n\n`;
     finalReport += `\n\n#### Generated on ${dayjs().format(`MM/DD/YYYY, hh:mma`)}`;

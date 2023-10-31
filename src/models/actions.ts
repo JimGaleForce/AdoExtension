@@ -15,6 +15,7 @@ export type GenerateDateRangeSummaryAction = {
     action: 'GenerateDateRangeSummary'
     from: string
     to: string
+    teamReport: boolean
 }
 
 export type RenumberBacklogAction = {

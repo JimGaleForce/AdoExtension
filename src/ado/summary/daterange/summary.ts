@@ -3,7 +3,7 @@ import { WorkItem, WorkItemFields, WorkItemHistory, WorkItemType } from "../../.
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { DateRangeItemParser, DateRangeSummary } from "../../../models/adoSummary";
 import { WorkItemTags } from "../../../models/ItemTag";
-import {  GetBatchItemDetails, GetWorkItem, GetWorkItemHistory } from "../../api";
+import { GetBatchItemDetails, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { Macro, WiqlQueryBuilder } from "../../api/wiql/wiql";
 import { ItemSummary } from "../../../models/adoSummary/item";
 import { CompletedParser, HistoryItemParser, WorkItemTypeParser } from "./parser";
@@ -15,7 +15,7 @@ const DateRangeSummaryParser: DateRangeItemParser[] = [
 ]
 
 // Generates a proper ADO Summary for a given date range
-export async function SummaryForDateRange(startDate: string, endDate: string) {
+export async function SummaryForDateRange(startDate: string, endDate: string, teamReport: boolean) {
     // Get all items from the specified date range.
     // For each item:
     // - Get state of item as it was during the start of the specified date range
@@ -39,12 +39,17 @@ export async function SummaryForDateRange(startDate: string, endDate: string) {
     }
 
     const query = WiqlQueryBuilder
-        .select("workitems", ["System.AssignedTo", "System.ChangedDate", "System.State"])
+        .select("workitems", ["System.AssignedTo", "System.AreaPath", "System.ChangedDate", "System.State"])
         .where("System.ChangedDate", '>=', startDate)
         .and("System.ChangedDate", '<=', endDate)
         .andGroup(builder => {
-            builder
-                .ever("System.AssignedTo", "=", Macro.CurrentUser)
+            if (teamReport) {
+                builder
+                    .where("System.AreaPath", "UNDER", config.projectPath.replace(/\//g, '\\'))
+            } else {
+                builder
+                    .ever("System.AssignedTo", "=", Macro.CurrentUser)
+            }
         })
         .andGroup(builder => {
             builder
@@ -65,9 +70,16 @@ export async function SummaryForDateRange(startDate: string, endDate: string) {
     // in parallel. This was not initially done due to concerns of hitting
     // API limits.
     for (const workItem of result.workItems) {
-        const itemSummary = await parseWorkItem(config, workItem.id, startDate, endDate);
-        if (itemSummary !== null && itemSummary.tags.completedBy?.uniqueName === config.email) {
-            summary.workItems[itemSummary.id] = itemSummary;
+        try {
+            const itemSummary = await parseWorkItem(config, workItem.id, startDate, endDate);
+            if (itemSummary !== null) {
+                if (teamReport || itemSummary.tags.completedBy?.uniqueName === config.email) {
+                    summary.workItems[itemSummary.id] = itemSummary;
+                }
+            }
+        } catch (e) {
+            console.error(`Error parsing work item ${workItem.id}`);
+            console.error(e);
         }
     }
 
