@@ -14,6 +14,30 @@ import { ExtractTeam, getIterationsX } from "../api";
 
 ///-///
 
+// @ts-ignore: valid import
+import mainWorld from "../is-new-ado-main-world?script&module";
+
+const script = document.createElement("script");
+script.src = chrome.runtime.getURL(mainWorld);
+script.type = "module";
+script.addEventListener("load", () => {
+    console.log("script loaded");
+});
+script.addEventListener("error", (err) => {
+    console.log("script error");
+    console.error(err);
+});
+
+console.log("starting script");
+document.head.append(script);
+
+var isNewAdoHub = false;
+var initialized = false;
+document.addEventListener('getIsNewAdoHub', function (e: any) {
+  isNewAdoHub = e.detail;
+  initialized = true;
+});
+
 export class Proposed {
   private _tfs_counts: any[] = [];
   private ic_currentLength = 0;
@@ -93,12 +117,18 @@ export class Proposed {
     setTimeout(() => this.ic_checkForChanges(), this.ic_time);
   
     // Table represents all elements on the sidebar that encompass the capacity of a person.
-    var table = document.querySelectorAll("td > .bolt-list-cell-content > div:has(div.work-details-progress-bar-container)");
+    var table = isNewAdoHub ?
+      document.querySelectorAll("td > .bolt-list-cell-content > div:has(div.work-details-progress-bar-container)") :
+      document.querySelectorAll(".grouped-progress-control > div > div");
+
     if (table.length > 0) {
       for (var i = 0; i < table.length; i++) {
         var item = table[i];
         // For each element, grab the name of the person.
-        var nameitem = item.querySelector("div > div > div");
+        var nameitem = isNewAdoHub ? 
+          item.querySelector("div > div > div") :
+          item.querySelector(".identity-picker-resolved-name");
+
         this.updateBars(nameitem, item)
       }
     }
@@ -118,7 +148,10 @@ export class Proposed {
       var name = nameitem.innerText;
       if (name) {
         // visual-progress-total is the black bar that represents the total capacity of a person.
-        var current = item.querySelector(".work-details-total-mark");
+        var current = isNewAdoHub ?
+          item.querySelector(".work-details-total-mark") :
+          item.querySelector(".visual-progress-total");
+
         if (current) {
           for (var j = 0; j < this._tfs_counts.length; j++) {
             var tfsitem = this._tfs_counts[j];
@@ -151,15 +184,26 @@ export class Proposed {
               }
               existingBugs.setAttribute('style', 'width: ' + bugPercent + "%; background-color: purple; float: left; height: 18px; opacity: 0.75");
   
-              var existingUnder = item.querySelector(".under-capacity");
+              var existingUnder = isNewAdoHub ?
+                item.querySelector(".under-capacity") :
+                item.querySelector(".visual-progress-underallocated");
+
               if (existingUnder) {
                 existingUnder.appendChild(existingProposed);
                 existingUnder.appendChild(existingBugs);
               } else {
-                var existingOver = item.querySelector(".over-capacity");
+                var existingOver = isNewAdoHub ?
+                  item.querySelector(".over-capacity") :
+                  item.querySelector(".visual-progress-total.visual-progress-overallocated");
+
                 if (existingOver && existingOver.parentNode) {
-                  existingOver.insertBefore(existingProposed, existingOver.firstChild);
-                  existingOver.insertBefore(existingBugs, existingOver.firstChild);
+                  if (isNewAdoHub) {
+                    existingOver.insertBefore(existingProposed, existingOver.firstChild);
+                    existingOver.insertBefore(existingBugs, existingOver.firstChild);
+                  } else {
+                    existingOver.parentNode.insertBefore(existingProposed, existingOver);
+                    existingOver.parentNode.insertBefore(existingBugs, existingOver)
+                  }
                 }
               }
   
@@ -168,7 +212,7 @@ export class Proposed {
                 existingMissing.parentNode.removeChild(existingMissing);
               }
   
-              var container = item.querySelector("div:not([class]):not(:has(div))");
+              var container = isNewAdoHub ? item.querySelector("div:not([class]):not(:has(div))") : item.querySelector(".visual-progress-container");
               if (tfsitem.missing > 0) {
                 existingMissing = document.createElement("div");
                 existingMissing.setAttribute('class', 'progress-text-missing');

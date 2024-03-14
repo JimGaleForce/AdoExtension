@@ -1,5 +1,5 @@
 // @ts-ignore: valid import
-import mainWorld from "./content-main-world?script&module";
+import mainWorld from "./is-new-ado-main-world?script&module";
 
 const script = document.createElement("script");
 script.src = chrome.runtime.getURL(mainWorld);
@@ -14,10 +14,6 @@ script.addEventListener("error", (err) => {
 
 console.log("starting script");
 document.head.append(script);
-
-document.addEventListener('getColors', function (e: any) {
-
-});
 
 var initialized = false;
 let isNewAdoHub: boolean;
