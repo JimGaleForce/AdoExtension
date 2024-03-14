@@ -1,3 +1,4 @@
+declare var dataProviders: any;
 let generateButton;
 
 function parseURL(): { organization: string, project: string, team: string, iteration: string } {
@@ -8,7 +9,7 @@ function parseURL(): { organization: string, project: string, team: string, iter
   const pathParts = url.pathname.split('/').filter(part => part);
 
   if (pathParts.length < 7) {
-      throw new Error('Unexpected URL format!');
+    throw new Error('Unexpected URL format!');
   }
 
   // Extract parts of the URL
@@ -18,10 +19,10 @@ function parseURL(): { organization: string, project: string, team: string, iter
   const iteration = decodeURIComponent(pathParts[6]);
 
   return {
-      organization,
-      project,
-      team,
-      iteration
+    organization,
+    project,
+    team,
+    iteration
   };
 }
 
@@ -35,17 +36,27 @@ async function createSummary() {
 }
 
 async function addGenerateButton() {
-  generateButton = document.createElement("button");
-  generateButton.textContent = "Generate summary";
+  if (!dataProviders?.sharedData?._features) {
+    window.setTimeout(waitFirst, 100);
+    return;
+  }
 
-  // copy styling from ADO button
-  generateButton.id = "generate-summary-button"
-  generateButton.className = "vss-PivotBar--button bolt-button enabled bolt-focus-treatment";
-  generateButton.onclick = createSummary;
+  const isNewAdoHub = dataProviders.sharedData._features["ms.vss-work-web.new-boards-hub-feature"] === true;
 
-  //TODO: check that we're on an iteration view first
-  let topBar = document.getElementsByClassName("sprints-tabbar-header-commandbar")[1];
+  let topBar = isNewAdoHub ? 
+    document.getElementsByClassName("sprints-tabbar-header-commandbar")[1] :
+    document.getElementsByClassName("vss-HubTileRegion")[0];
+
   if (topBar) {
+    generateButton = document.createElement("button");
+    generateButton.textContent = "Generate summary";
+
+    // copy styling from ADO button
+    generateButton.id = "generate-summary-button"
+    generateButton.className = isNewAdoHub ?
+      "vss-PivotBar--button bolt-button enabled bolt-focus-treatment" :
+      "vss-PivotBar--button bolt-button enabled bolt-focus-treatment";
+    generateButton.onclick = createSummary;
     topBar.prepend(generateButton);
   } else {
     waitFirst();

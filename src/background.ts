@@ -1,5 +1,5 @@
 import renumberBacklog from "./actions/renumberBacklog";
-import { ExtractProject, ExtractTeam, GetBacklogWorkItemsById, GetBacklogs, GetIterationFromURL } from "./ado/api";
+import { GetIterationFromURL } from "./ado/api";
 import { SummaryForDateRange, SummaryForIteration } from "./ado/summary";
 import { isBGAction } from "./models/actions";
 import { isValidConfig, initializeConfig, loadConfig } from "./models/adoConfig";

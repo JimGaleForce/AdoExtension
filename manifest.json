@@ -37,7 +37,7 @@
         "src/adostyles.css"
       ],
       "js": [
-        "src/ado/content.js"
+        "src/ado/content.ts"
       ],
       "matches": [
         "*://*.visualstudio.com/*",
