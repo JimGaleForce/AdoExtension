@@ -348,7 +348,7 @@ export class Proposed {
     ids = ids.substr(0, ids.length - 1);
   
     this.httpGetAsync(this.getDataCreateTable, this.urlBase + "_apis/wit/workitems?ids=" + ids +
-      "&fields=System.State,System.AssignedTo,OSG.RemainingDays,OSG.Cost," +
+      "&fields=System.State,System.AssignedTo,OSG.RemainingDays,OSG.Cost,OSG.Substatus," +
       "System.IterationLevel3,Microsoft.VSTS.Scheduling.OriginalEstimate," +
       "System.WorkItemType,Microsoft.VSTS.CMMI.TaskType&api-version=6.0");
   }
@@ -379,18 +379,29 @@ export class Proposed {
   
       const state = item.fields["System.State"];
       const workitemType = item.fields["System.WorkItemType"];
+      const substatus = item.fields["OSG.Substatus"];
       const taskType = item.fields["Microsoft.VSTS.CMMI.TaskType"];
-      const proposed = state === "Proposed";
+      let proposed = state === "Proposed";
       const cost = item.fields["OSG.Cost"];
       const originalEstimate = item.fields["Microsoft.VSTS.Scheduling.OriginalEstimate"];
       const isCostable = workitemType === "Bug" || workitemType === "Task";
       const costOrOriginal = (!isNaN(cost) && cost > 0) ? cost : (!isNaN(originalEstimate) && originalEstimate > 0) ? originalEstimate : 0;
       const isCompleted = state === "Completed" || state === "Resolved";
       const isCompleting = state === "Started" || state === "Active";
-      const bug = workitemType === "Bug";
+      let bug = workitemType === "Bug";
       const isAmountExpected = state === "Proposed" || state === "Active" || state == "Committed" || state == "Started";
       const other = !proposed && !bug && state !== "Cut" && state !== "Closed" && state !== "Resolved";
       let amount = item.fields["OSG.RemainingDays"];
+
+      if (!isCompleted && substatus && substatus === "Consider") {
+        proposed = true;
+        bug = false;
+      }
+      if (isCompleted) {
+        bug = false;
+        proposed = false;
+      }
+
       if (isNaN(amount)) {
         amount = 0.0;
       }

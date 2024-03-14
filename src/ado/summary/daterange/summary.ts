@@ -4,7 +4,7 @@ import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 import { DateRangeItemParser, DateRangeSummary } from "../../../models/adoSummary";
 import { WorkItemTags } from "../../../models/ItemTag";
 import { GetBatchItemDetails, GetWorkItem, GetWorkItemHistory } from "../../api";
-import { Macro, WiqlQueryBuilder } from "../../api/wiql/wiql";
+import { WiqlQueryBuilder } from "../../api/wiql/wiql";
 import { ItemSummary } from "../../../models/adoSummary/item";
 import { CompletedParser, HistoryItemParser, WorkItemTypeParser } from "./parser";
 
