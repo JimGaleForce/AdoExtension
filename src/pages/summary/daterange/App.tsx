@@ -8,6 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import { GenerateDateRangeSummaryAction } from "../../../models/actions";
 import dayjs from "dayjs";
 import { ItemsRelation } from "../../../models/adoSummary/item";
+import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
 
 
 const getIcon = (workItemType: string): string => {
@@ -181,6 +182,7 @@ const App = (): JSX.Element => {
   const [searchParams, _setSearchParams] = useSearchParams()
   const [from, setFrom] = useState<string>()
   const [to, setTo] = useState<string>()
+  const [config, setConfig] = useState<AdoConfigData>();
   const [teamReport, setTeamReport] = useState<boolean>(false)
   const [summary, setSummary] = useState<DateRangeSummary>()
   const [value, setValue] = useState("**No date range specified; Waiting...**");
@@ -251,6 +253,9 @@ const App = (): JSX.Element => {
   }, [from, to, teamReport, generateRequestSent]);
 
   useEffect(() => {
+    if (!config) {
+      return;
+    }
     if (!summary) {
       console.log("No summary yet");
       return;
@@ -259,6 +264,8 @@ const App = (): JSX.Element => {
     let finalReport: string = `# Date range summary from ${dayjs(summary.startDate).format("MM/DD/YYYY")} to ${dayjs(summary.endDate).format("MM/DD/YYYY")}\n\n`;
     if (teamReport) { 
       finalReport += `## Team Summary\n\n`;
+    } else {
+      finalReport += `## Summary for ${config.email}\n\n`;
     }
 
     finalReport += `${parseSummary(summary)}\n\n`;
@@ -268,7 +275,16 @@ const App = (): JSX.Element => {
 
     setValue(finalReport);
 
-  }, [summary]);
+  }, [summary, config]);
+
+  useEffect(() => {
+    if (config) {
+      return;
+    }
+    loadConfig().then((config) => {
+      setConfig(config);
+    });
+  }, [config]);
 
   return (
     <>

@@ -48,7 +48,7 @@ export async function SummaryForDateRange(startDate: string, endDate: string, te
                     .where("System.AreaPath", "UNDER", config.projectPath.replace(/\//g, '\\'))
             } else {
                 builder
-                    .ever("System.AssignedTo", "=", Macro.CurrentUser)
+                    .ever("System.AssignedTo", "=", config.email)
             }
         })
         .andGroup(builder => {
