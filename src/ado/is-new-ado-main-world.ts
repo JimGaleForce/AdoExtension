@@ -13,3 +13,5 @@ function waitFirst() {
 }
 
 waitFirst();
+
+export {};

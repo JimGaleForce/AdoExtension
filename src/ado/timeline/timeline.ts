@@ -304,9 +304,6 @@ export class Timeline {
             case 'listedorder':
                 xitems = xitems.sort((a, b) => a.order - b.order);
                 break;
-            case 'listedorder':
-                xitems = xitems.sort((a, b) => a.orderId - b.orderId);
-                break;
         }
 
         xitems.map(item => {

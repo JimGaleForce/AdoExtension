@@ -397,6 +397,7 @@ export class Proposed {
         proposed = true;
         bug = false;
       }
+
       if (isCompleted) {
         bug = false;
         proposed = false;
