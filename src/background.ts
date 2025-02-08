@@ -1,8 +1,9 @@
 import renumberBacklog from "./actions/renumberBacklog";
 import { GetIterationFromURL } from "./ado/api";
 import { SummaryForDateRange, SummaryForIteration } from "./ado/summary";
+import { SummaryForCycle } from "./ado/summary/cycle";
 import { isBGAction } from "./models/actions";
-import { isValidConfig, initializeConfig, loadConfig } from "./models/adoConfig";
+import { isValidConfig, initializeConfig } from "./models/adoConfig";
 
 var adoxChanged = true;
 
@@ -38,6 +39,31 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   switch (message.action) {
+    case 'OpenCycleSummary':
+    if (await isValidConfig() === false) {
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab.id, { error: 'Invalid ADO Power Tools Config' })
+      } 
+      return;
+    }
+
+    // Get cycle
+    const cycle = message.cycle;
+
+    if (cycle === undefined) {
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab.id, { error: 'Unable to get cycle information' })
+      } 
+      return;
+    }
+
+    await chrome.tabs.create({
+      active: true,
+      url: `src/pages/summary/cycle/index.html?team=${message.cycle.team}&cycle=${message.cycle.cycle
+      }`
+    });
+      break;
+
     case 'OpenIterationSummary':
     const validConfig = await isValidConfig();
 
@@ -62,6 +88,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       active: true,
       url: `src/pages/summary/iteration/index.html?team=${message.iteration.team}&iteration=${iteration.id}`
     });
+      break;
+    case 'GenerateCycleSummary':
+      let cycleSummary = await SummaryForCycle(message.team, message.cycle)
+      if (sender.tab?.id) {
+        chrome.tabs.sendMessage(sender.tab?.id, { summary: cycleSummary })
+      }
       break;
     case 'GenerateIterationSummary':
       let iterationSummary = await SummaryForIteration(message.team, message.iterationId)

@@ -78,9 +78,15 @@ const parseWorkItemType = (items: ItemsRelation, summary: DateRangeSummary, inde
           status = "🔴";
       }
       row.push(status);
+
+      // Risk assessments
+      row.push(summary.workItems[key].risk ?? "")
+      row.push(summary.workItems[key].riskComment ?? "")
+      row.push(summary.workItems[key].overallComment ?? "")
     } else {
       row.push("");
     }
+
     table.push(row);
 
     // If there's any children of this item, recursively add it to the table as well
@@ -106,7 +112,7 @@ const parseSummary = (summary: DateRangeSummary): string => {
   console.log("PARSING");
   let overallTable: string[][] = []
 
-  overallTable.push(['Type', 'ID', 'Title', 'Status']);
+  overallTable.push(['Type', 'ID', 'Title', 'Status', 'Risk Assessment', 'Risk Comment', 'Overall Comment']);
 
   // Parse the epics in relation to this user
   if (summary.topDownMap.Epic !== undefined && Object.keys(summary.topDownMap.Epic).length > 0) {

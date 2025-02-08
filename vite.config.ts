@@ -8,6 +8,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        cycleSummary: 'src/pages/summary/cycle/index.html',
         iterationSummary: 'src/pages/summary/iteration/index.html',
         dateRangeSummary: 'src/pages/summary/daterange/index.html'
       }

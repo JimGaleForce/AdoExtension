@@ -1,4 +1,4 @@
-import { OpenIterationSummaryAction } from "../models/actions";
+import { OpenCycleSummaryAction, OpenIterationSummaryAction } from "../models/actions";
 
 // @ts-ignore: valid import
 import mainWorld from "./content-script-main-world?script&module";
@@ -16,6 +16,19 @@ script.addEventListener("error", (err) => {
 
 console.log("starting script");
 document.head.append(script);
+
+
+document.addEventListener('getSummaryForCycle', function (e: any) {
+    const cycle = e.detail;
+
+    if (cycle) {
+        const action: OpenCycleSummaryAction = {
+            action: 'OpenCycleSummary',
+            cycle
+        }
+        chrome.runtime.sendMessage(action , (resp) => {});
+    }
+});
 
 document.addEventListener('getSummaryForIteration', function (e: any) {
     const iteration = e.detail;

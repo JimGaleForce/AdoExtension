@@ -39,9 +39,17 @@ export async function SummaryForDateRange(startDate: string, endDate: string, te
     }
 
     const query = WiqlQueryBuilder
-        .select("workitems", ["System.AssignedTo", "System.AreaPath", "System.ChangedDate", "System.State"])
-        .where("System.ChangedDate", '>=', startDate)
-        .and("System.ChangedDate", '<=', endDate)
+        .select("workitems", ["System.WorkItemType", "System.AssignedTo", "System.AreaPath", "Microsoft.VSTS.Common.StateChangeDate", "System.State", "System.IterationPath", "OSG.RiskAssessment", "OSG.RiskAssessmentComment", "OSG.OverallComments"])
+        .where("Microsoft.VSTS.Common.StateChangeDate", '>=', startDate)
+        .and("Microsoft.VSTS.Common.StateChangeDate", '<=', endDate)
+        // .where("System.IterationPath", "EVER", "Edge\\Cycles\\24-C8")
+        // .andGroup(builder => {
+        //     builder
+        //         .where("System.State", "EVER", "Committed")
+        //         .or("System.State", "EVER", "Started")
+        // })
+        // .and("System.WorkItemType", "=", "Scenario")
+        .and("System.State", "IN", ["Resolved", "Closed", "Completed"])
         .andGroup(builder => {
             if (teamReport) {
                 builder
@@ -62,7 +70,7 @@ export async function SummaryForDateRange(startDate: string, endDate: string, te
     console.log("Query:");
     console.log(query.buildQuery());
 
-    const result = await query.execute(config)
+    const result = await query.execute(config, endDate)
     console.log("Result:");
     console.log();
 
@@ -138,6 +146,9 @@ async function parseWorkItem(config: AdoConfigData, workItemId: string, startDat
         state: workItem.fields["System.State"],
         assignedTo: tags.completedBy ?? workItem.fields["System.AssignedTo"],
         tags: tags,
+        risk: workItem.fields["OSG.RiskAssessment"] ?? "",
+        riskComment: workItem.fields["OSG.RiskAssessmentComment"] ?? "",
+        overallComment: workItem.fields["OSG.OverallComments"] ?? ""
     }
 }
 

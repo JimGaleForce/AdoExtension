@@ -1,7 +1,8 @@
 declare var dataProviders: any;
-let generateButton;
+let generateIterationSummaryButton;
+let generateCycleSummaryButton;
 
-function parseURL(): { organization: string, project: string, team: string, iteration: string } {
+function parseURL(): { organization: string, project: string, team: string, cycle: string, iteration: string } {
   // Grab the current page's url
   const url = new URL(window.location.href);
 
@@ -16,26 +17,37 @@ function parseURL(): { organization: string, project: string, team: string, iter
   const organization = url.hostname.split('.')[0];
   const project = pathParts[0];
   const team = decodeURIComponent(pathParts[3]);
-  const iteration = decodeURIComponent(pathParts[6]);
+  const cycle = decodeURIComponent(pathParts[6]);
+  const iteration = decodeURIComponent(pathParts[7]);
 
   return {
     organization,
     project,
     team,
+    cycle,
     iteration
   };
 }
 
-async function createSummary() {
+async function createCycleSummary() {
   const data = parseURL();
-  console.log(`Creating summary for ${data.iteration}...`);
+  console.log(`Creating cycle summary for: ${data.cycle}.`);
+  document.dispatchEvent(new CustomEvent('getSummaryForCycle',
+    {
+      detail: data
+    }));
+}
+
+async function createIterationSummary() {
+  const data = parseURL();
+  console.log(`Creating iteration summary for: ${data.iteration}.`);
   document.dispatchEvent(new CustomEvent('getSummaryForIteration',
     {
       detail: data
     }));
 }
 
-async function addGenerateButton() {
+async function addGenerateButtons() {
   if (!dataProviders?.sharedData?._features) {
     window.setTimeout(waitFirst, 100);
     return;
@@ -48,23 +60,36 @@ async function addGenerateButton() {
     document.getElementsByClassName("vss-HubTileRegion")[0];
 
   if (topBar) {
-    generateButton = document.createElement("button");
-    generateButton.textContent = "Generate summary";
+    // Cycle summary
+    generateCycleSummaryButton = document.createElement("button");
+    generateCycleSummaryButton.textContent = "Cycle summary";
 
     // copy styling from ADO button
-    generateButton.id = "generate-summary-button"
-    generateButton.className = isNewAdoHub ?
+    generateCycleSummaryButton.id = "generate-summary-button"
+    generateCycleSummaryButton.className = isNewAdoHub ?
       "vss-PivotBar--button bolt-button enabled bolt-focus-treatment" :
       "vss-PivotBar--button bolt-button enabled bolt-focus-treatment";
-    generateButton.onclick = createSummary;
-    topBar.prepend(generateButton);
+      generateCycleSummaryButton.onclick = createCycleSummary;
+    topBar.prepend(generateCycleSummaryButton);
+
+    // Iteration summary
+    generateIterationSummaryButton = document.createElement("button");
+    generateIterationSummaryButton.textContent = "Iteration summary";
+
+    // copy styling from ADO button
+    generateIterationSummaryButton.id = "generate-summary-button"
+    generateIterationSummaryButton.className = isNewAdoHub ?
+      "vss-PivotBar--button bolt-button enabled bolt-focus-treatment" :
+      "vss-PivotBar--button bolt-button enabled bolt-focus-treatment";
+    generateIterationSummaryButton.onclick = createIterationSummary;
+    topBar.prepend(generateIterationSummaryButton);
   } else {
     waitFirst();
   }
 }
 
 function waitFirst() {
-  window.setTimeout(addGenerateButton, 100);
+  window.setTimeout(addGenerateButtons, 100);
 }
 
 waitFirst();

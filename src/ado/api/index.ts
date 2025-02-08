@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { BacklogList, BacklogWorkItems, BatchWorkItems, Iteration, IterationFromURL, IterationWorkItems, ListIteration, Patch, TeamFieldValues, WorkItem, WorkItemFields, WorkItemHistory } from "../../models/adoApi";
 import { AdoConfigData } from "../../models/adoConfig";
 
@@ -38,6 +39,24 @@ async function fetchWithAuth(url: string, retry: number = 0): Promise<any> {
 }
 
 async function authenticate(url: string): Promise<void> {
+  // Clear cookies
+  chrome.cookies.getAll({ domain: "visualstudio.com" }, (cookies) => {
+    cookies.forEach((cookie) => {
+        let cookieDetails = {
+            url: "https://" + cookie.domain + cookie.path,
+            name: cookie.name
+        };
+
+        if (cookie.secure) {
+            cookieDetails.url = "https://" + cookie.domain + cookie.path;
+        } else {
+            cookieDetails.url = "http://" + cookie.domain + cookie.path;
+        }
+
+        chrome.cookies.remove(cookieDetails);
+    });
+  });
+
   // Open a new tab in the background
   const tab = await chrome.tabs.create({
     url: url,
@@ -216,6 +235,62 @@ export async function GetTeamValues(config: AdoConfigData, team: string): Promis
   }
 
   return json as TeamFieldValues;
+}
+
+interface IterationResp {
+  id: string;
+  name: string;
+  path: string;
+  attributes: {
+      startDate: string;
+      finishDate: string;
+      timeFrame: string;
+  };
+  url: string;
+}
+interface ApiResponse {
+  count: number;
+  value: IterationResp[];
+}
+
+export async function GetCycle(config: AdoConfigData, cycle: string, teamOverride?: string): Promise<{iterationPaths: string[], startDate: string, finishDate: string}> {
+  const project = ExtractProject(config);
+  const team = teamOverride ?? ExtractTeam(config);
+  const { organization } = config;
+  let url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations?api-version=7.0`;
+
+  const json = await fetchWithAuth(url);
+
+  // If we get an error (i.e. Work item does not exist)
+  if (json.message) {
+    console.error(`Error getting cycle ${cycle}`)
+    throw new Error(json.message);
+  }
+
+  const filteredIterations = (json as ApiResponse).value.filter(iteration =>
+    iteration.path.includes(cycle)
+  );
+  
+  const iterationPaths = filteredIterations.map(iter => iter.path);
+  const startDates = filteredIterations.map(iteration =>
+    dayjs(iteration.attributes.startDate)
+);
+const finishDates = filteredIterations.map(iteration =>
+    dayjs(iteration.attributes.finishDate)
+);
+
+// Find the earliest start date and latest finish date using Day.js
+const earliestStartDate = startDates.reduce((earliest, date) =>
+    date.isBefore(earliest) ? date : earliest,
+    startDates[0]
+);
+
+const latestFinishDate = finishDates.reduce((latest, date) =>
+    date.isAfter(latest) ? date : latest,
+    finishDates[0]
+);
+
+    return { iterationPaths, startDate: earliestStartDate.toISOString(), finishDate: latestFinishDate.toISOString() }
 }
 
 export async function GetIteration(config: AdoConfigData, iterationId: string, teamOverride?: string): Promise<Iteration> {

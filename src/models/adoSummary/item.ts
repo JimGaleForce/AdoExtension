@@ -1,4 +1,4 @@
-import { AdoUser, WorkItem, WorkItemHistoryEvent, WorkItemState, WorkItemType } from "../adoApi"
+import { AdoUser, RiskAssessmentType, WorkItem, WorkItemHistoryEvent, WorkItemState, WorkItemType } from "../adoApi"
 import { AdoConfigData } from "../adoConfig"
 import { BaseTag } from "../ItemTag"
 
@@ -8,6 +8,9 @@ export type ItemSummary<T extends BaseTag> = {
     type: WorkItemType
     assignedTo: AdoUser
     state: WorkItemState
+    risk?: RiskAssessmentType
+    riskComment?: string
+    overallComment?: string
     tags: Partial<T>
 }
 

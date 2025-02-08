@@ -1,18 +1,17 @@
 import dayjs from "dayjs";
-import { Iteration, WorkItem, WorkItemFields, WorkItemHistory, WorkItemType } from "../../../models/adoApi";
+import { WorkItem, WorkItemFields, WorkItemHistory, WorkItemType } from "../../../models/adoApi";
 import { AdoConfigData, loadConfig } from "../../../models/adoConfig";
-import { IterationSummary } from "../../../models/adoSummary";
-import { IterationItemParser, IterationParserExtraData, LoadWorkItemsForIteration } from "../../../models/adoSummary/iteration";
 import { WorkItemTags } from "../../../models/ItemTag";
-import { GetBatchItemDetails, GetIteration, GetWorkItem, GetWorkItemHistory } from "../../api";
+import { GetBatchItemDetails, GetCycle, GetWorkItem, GetWorkItemHistory } from "../../api";
 import { CompletedParser, HistoryItemParser, IterationTrackerParser, ReassignedParser, WorkItemTypeParser } from "./parser";
 import { CapacityParser } from "./parser/CapacityParser";
 import { ItemSummary, TopDownMap } from "../../../models/adoSummary/item";
-import { IgnoreParser } from "./parser/IgnoreParser";
 import { AssignedToParser } from "./parser/AssignedToParser";
+import { CycleItemParser, CycleParserExtraData, CycleSummary, LoadWorkItemsForCycle } from "../../../models/adoSummary/cycle";
+import { IgnoreParser } from "./parser/IgnoreParser";
 
 // Parsers are ran sequentially
-const IterationSummaryParser: IterationItemParser[] = [
+const CycleSummaryParser: CycleItemParser[] = [
     IgnoreParser,
     AssignedToParser,
     ReassignedParser,
@@ -23,9 +22,9 @@ const IterationSummaryParser: IterationItemParser[] = [
     HistoryItemParser,
 ]
 
-// Generates a proper ADO Summary for a given team and iteration
-export async function SummaryForIteration(team: string, iterationId: string) {
-    // Get all items from the specified iteration.
+// Generates a proper ADO Summary for a given team and cycle
+export async function SummaryForCycle(team: string, cycle: string) {
+    // Get all items from the specified cycle.
     // For each item:
     // - Get state of item as it was during the start of the specified iteration
     // - Get history of item, looking only at the changes during the sprint
@@ -37,14 +36,14 @@ export async function SummaryForIteration(team: string, iterationId: string) {
 
     const config = await loadConfig();
 
-    // First - get data about specified iteration (start date / end date)
-    const iteration = await GetIteration(config, iterationId, team);
-    const workItems = await LoadWorkItemsForIteration(team, iterationId);
+    // First - get data about specified cycle (start date / end date)
+    const { startDate, finishDate, iterationPaths } = await GetCycle(config, cycle, team);
+    const workItems = await LoadWorkItemsForCycle(team, cycle, iterationPaths);
 
-    const { startDate, finishDate } = iteration.attributes;
-
-    let summary: IterationSummary = {
-        iteration: iteration,
+    let summary: CycleSummary = {
+        cycle,
+        startDate,
+        finishDate,
         workItems: {},
         topDownMap: {}
     }
@@ -53,7 +52,7 @@ export async function SummaryForIteration(team: string, iterationId: string) {
     // in parallel. This was not initially done due to concerns of hitting
     // API limits.
     for (const workItem of workItems) {
-        const itemSummary = await parseWorkItem(config, iteration, workItem.id, startDate, finishDate);
+        const itemSummary = await parseWorkItem(config, cycle, workItem.id, startDate, finishDate);
         if (itemSummary !== null) {
             summary.workItems[itemSummary.id] = itemSummary;
         }
@@ -69,7 +68,7 @@ export async function SummaryForIteration(team: string, iterationId: string) {
     return summary;
 }
 
-async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workItemId: string, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
+async function parseWorkItem(config: AdoConfigData, cycle: string, workItemId: string, startDateStr: string, finishDateStr: string): Promise<ItemSummary<WorkItemTags> | null> {
     const startDate = dayjs(startDateStr);
     const finishDate = dayjs(finishDateStr);
 
@@ -92,8 +91,8 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
     const workItemCreatedAt = dayjs(workItemCreatedAtStr)
     const queryDate = workItemCreatedAt.isAfter(startDate) ? workItemCreatedAtStr : startDateStr;
     const workItem = await GetWorkItem(config, workItemId, queryDate)
-    const extraData: IterationParserExtraData = {
-        iteration: iteration
+    const extraData: CycleParserExtraData = {
+        cycle
     }
 
     let tags: Partial<WorkItemTags> = {}
@@ -106,7 +105,7 @@ async function parseWorkItem(config: AdoConfigData, iteration: Iteration, workIt
 
     // Parse the work item using all parsers defined in the IterationSummaryParser.
     // The parser will update the `workItemSummary.tags` object directly
-    for (const parser of IterationSummaryParser) {
+    for (const parser of CycleSummaryParser) {
         tags = await parser(config, workItem, relevantHistoryEvents, tags, extraData);
     }
 
@@ -133,7 +132,7 @@ const fields: (keyof WorkItemFields)[] = [
 ]
 
 
-async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof WorkItemFields>[], summary: IterationSummary): Promise<IterationSummary> {
+async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof WorkItemFields>[], summary: CycleSummary): Promise<CycleSummary> {
     const { topDownMap } = summary;
 
     // Fetch and parse parent items
@@ -222,7 +221,7 @@ function propagateAssignedTo(topDownMap: TopDownMap, itemKey: WorkItemType, item
 // Given the finalized summary, finalize the top down map.
 // This gives us the parents of all items in the summary until we hit either a key result or an epic.
 // From here, we are able to generate a summary table starting from the Epic / K/R Level.
-async function MapOutWorkItems(summary: IterationSummary): Promise<IterationSummary> {
+async function MapOutWorkItems(summary: CycleSummary): Promise<CycleSummary> {
     const config = await loadConfig();
 
     const workItemTypes: WorkItemType[] = ["Bug", "Task", "Deliverable", "Scenario", "Epic", "Key Result"];

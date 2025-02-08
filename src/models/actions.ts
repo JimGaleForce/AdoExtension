@@ -1,5 +1,16 @@
 import { IterationFromURL } from "./adoApi"
 
+export type OpenCycleSummaryAction = {
+    action: 'OpenCycleSummary'
+    cycle: IterationFromURL
+}
+
+export type GenerateCycleSummaryAction = {
+    action: 'GenerateCycleSummary'
+    cycle: string
+    team: string
+}
+
 export type OpenIterationSummaryAction = {
     action: 'OpenIterationSummary'
     iteration: IterationFromURL
@@ -23,6 +34,8 @@ export type RenumberBacklogAction = {
 }
 
 export type BGAction =
+    | OpenCycleSummaryAction
+    | GenerateCycleSummaryAction
     | OpenIterationSummaryAction
     | GenerateIterationSummaryAction
     | GenerateDateRangeSummaryAction

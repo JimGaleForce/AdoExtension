@@ -1,14 +1,18 @@
 {
   "manifest_version": 3,
   "name": "ADO Power Tools",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "background": {
     "service_worker": "src/background.ts"
   },
   "permissions": [
+    "cookies",
     "storage",
     "alarms",
     "notifications"
+  ],
+  "host_permissions": [
+    "https://visualstudio.com/*"
   ],
   "action": {
     "default_icon": {
@@ -21,6 +25,7 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "src/pages/summary/cycle/index.html",
         "src/pages/summary/iteration/index.html",
         "src/pages/summary/daterange/index.html",
         "src/adostyles.css"

@@ -36,6 +36,7 @@ export type IterationFromURL = {
     organization: string
     project: string
     team: string
+    cycle: string
     iteration: string
 }
 
@@ -162,6 +163,11 @@ export type WorkItemType =
     | "Scenario"
     | "Task"
 
+export type RiskAssessmentType =
+    | "On Track"
+    | "At Risk"
+    | "Not On Track"
+
 export type AdoUser = {
     displayName: string
     url: string
@@ -188,11 +194,16 @@ export type WorkItemFields = {
     "System.ChangedDate": string
     "System.ChangedBy": AdoUser
 
+    "OSG.RiskAssessment": RiskAssessmentType
+    "OSG.RiskAssessmentComment": string
+    "OSG.OverallComments": string
+
     "System.CommentCount": number
     "System.Title": string
     "System.IsDeleted": boolean
 
     "System.Parent"?: number
+    "Microsoft.VSTS.Common.StateChangeDate"?: string
     "Microsoft.VSTS.Scheduling.OriginalEstimate"?: number
     "Microsoft.VSTS.Scheduling.RemainingWork"?: number
     "OSG.RemainingDays"?: number

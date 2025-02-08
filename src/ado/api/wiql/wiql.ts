@@ -174,11 +174,11 @@ export class WiqlQueryBuilder<T extends keyof WorkItemFields, K> {
         return `SELECT ${this._selectFields.map(f => `[${String(f)}]`).join(", ")} FROM ${this._from} WHERE ${conditionString}${this._orderBy ? ` ORDER BY [${this._orderBy}]` : ""}${this._mode ? ` MODE (${this._mode})` : ""}`;
     }
 
-    async execute(config: AdoConfigData): Promise<K> {
+    async execute(config: AdoConfigData, asOf?: string): Promise<K> {
         const project = ExtractProject(config);
         const { organization } = config;
 
-        return postWithAuth(`https://dev.azure.com/${organization}/${project}/_apis/wit/wiql?api-version=6.0`,
+        return postWithAuth(`https://dev.azure.com/${organization}/${project}/_apis/wit/wiql?api-version=6.0${asOf ? `&asOf=${asOf}` : ''}`,
             {
                 query: this.buildQuery()
             });
