@@ -50,8 +50,8 @@ export const IterationTrackerParser: CycleItemParser = async (config, workItem, 
             historyEvent.fields?.["System.IterationPath"].newValue.indexOf(extra.cycle) === -1) {
             iterationTrackerTag.moved.outOfIteration = true
         }
-        if (historyEvent.fields?.["System.IterationPath"]?.oldValue &&
-            historyEvent.fields?.["System.IterationPath"]?.oldValue.indexOf(extra.cycle) === -1 &&
+        if ((!historyEvent.fields?.["System.IterationPath"]?.oldValue ||
+            historyEvent.fields?.["System.IterationPath"]?.oldValue.indexOf(extra.cycle) === -1) &&
             historyEvent.fields?.["System.IterationPath"]?.newValue &&
             historyEvent.fields?.["System.IterationPath"].newValue.indexOf(extra.cycle) !== -1) {
                 iterationTrackerTag.moved.intoIteration = true

@@ -12,7 +12,8 @@
     "notifications"
   ],
   "host_permissions": [
-    "https://visualstudio.com/*"
+    "*://*.visualstudio.com/*",
+    "*://dev.azure.com/*"
   ],
   "action": {
     "default_icon": {

@@ -42,18 +42,17 @@ async function authenticate(url: string): Promise<void> {
   // Clear cookies
   chrome.cookies.getAll({ domain: "visualstudio.com" }, (cookies) => {
     cookies.forEach((cookie) => {
-        let cookieDetails = {
-            url: "https://" + cookie.domain + cookie.path,
-            name: cookie.name
-        };
+      const protocol = cookie.secure ? "https" : "http";
+      const domain = cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain;
+      const cookieUrl = `${protocol}://${domain}${cookie.path}`;
 
-        if (cookie.secure) {
-            cookieDetails.url = "https://" + cookie.domain + cookie.path;
-        } else {
-            cookieDetails.url = "http://" + cookie.domain + cookie.path;
+      chrome.cookies.remove({ url: cookieUrl, name: cookie.name }, (details) => {
+        if (chrome.runtime.lastError) {
+          console.error("Failed to remove cookie:", chrome.runtime.lastError);
+        } else if (details) {
+          console.log("Deleted cookie:", details);
         }
-
-        chrome.cookies.remove(cookieDetails);
+      });
     });
   });
 
@@ -63,21 +62,40 @@ async function authenticate(url: string): Promise<void> {
     active: false,
   });
 
-  // Wait for the tab to fully load
+  if (!tab.id) return;
+
+  // Track when the page is actually done loading (handles redirects)
   await new Promise<void>((resolve) => {
-    chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
-      if (tabId === tab.id && changeInfo.status === "complete") {
-        // Remove the listener and resolve the promise
-        chrome.tabs.onUpdated.removeListener(listener);
-        resolve();
+    let lastUrl = url;
+    let loadCounter = 0;
+    let timeout: number;
+
+    function listener(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
+      if (tabId !== tab.id) return;
+
+      if (changeInfo.status === "complete") {
+        loadCounter++;
+
+        // If the URL has changed, it means a redirect happened
+        if (tab.url && tab.url !== lastUrl) {
+          lastUrl = tab.url;
+          loadCounter = 0; // Reset counter because a redirect happened
+        }
+
+        // Ensure that no new loads are triggered for 1 second
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          chrome.tabs.onUpdated.removeListener(listener);
+          resolve();
+        }, 2000);
       }
-    });
+    }
+
+    chrome.tabs.onUpdated.addListener(listener);
   });
 
-  // Close the tab
-  if (tab.id) {
-    await chrome.tabs.remove(tab.id);
-  }
+  // Close the tab after it's done
+  await chrome.tabs.remove(tab.id);
 }
 
 export async function post(url: string, body: any, timeout: number = 30000): Promise<Response> {
@@ -272,6 +290,14 @@ export async function GetCycle(config: AdoConfigData, cycle: string, teamOverrid
   );
   
   const iterationPaths = filteredIterations.map(iter => iter.path);
+
+  if (iterationPaths.length > 0) {
+    const lastSlashIndex = iterationPaths[0].lastIndexOf('\\');
+    iterationPaths.push(iterationPaths[0].substring(0, lastSlashIndex));
+    console.log("Added:");
+    console.log(iterationPaths);
+  }
+
   const startDates = filteredIterations.map(iteration =>
     dayjs(iteration.attributes.startDate)
 );
