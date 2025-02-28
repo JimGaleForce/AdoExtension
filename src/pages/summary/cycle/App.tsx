@@ -59,26 +59,46 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: C
     return table;
   }
 
+  let first = true;
+  let spaceBetweenItems = indentation <= 1;
+  let titlePrepostfix = "";
+
   let prefix = "";
   for (let i = 0; i < indentation; i++) {
     prefix += "---- ";
   }
 
+  if (indentation === 0) {
+    titlePrepostfix = "**";
+  } else if (indentation === 1) {
+    titlePrepostfix = "*"
+  }
+
   // Iterate through all items passed through
   for (const key in items) {
     const item = items[key];
+    const id = item.id;
 
     if (!shouldAdd(user, item, summary)) {
       continue;
     }
 
+    // Add a blank row between previous scenarios
+    if (first) {
+      first = false;
+    } else {
+      if (spaceBetweenItems) {
+        table.push(["---"]);
+      }
+    }
+
     let row: string[] = [];
     // Add the work item ID and title
-    row.push(`[${key}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${key})`, `${prefix} ${getIcon(item.type)} ${item.title}`);
+    row.push(`[${id}](https://microsoft.visualstudio.com/Edge/_workitems/edit/${id})`, `${prefix} ${titlePrepostfix}${getIcon(item.type)} ${item.title}${titlePrepostfix}`);
 
-    if (key in summary.workItems) {
+    if (id in summary.workItems) {
       // Add the status if it exists
-      const { tags, state } = summary.workItems[key];
+      const { tags, state } = summary.workItems[id];
       let status = ""
 
       if (tags.moved?.intoIteration) {
@@ -122,9 +142,9 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: C
       row.push(status);
 
       // Risk assessments
-      row.push(summary.workItems[key].risk ?? "")
-      row.push(summary.workItems[key].riskComment ?? "")
-      row.push(summary.workItems[key].overallComment ?? "")
+      row.push(summary.workItems[id].risk ?? "")
+      row.push(summary.workItems[id].riskComment ?? "")
+      row.push(summary.workItems[id].overallComment ?? "")
     }
 
     table.push(row);
@@ -154,66 +174,64 @@ const parseUser = (user: string, summary: CycleSummary): string | null => {
 
   overallTable.push(['Work Item', 'Title', 'Status', 'Risk Assessment', 'Risk Comment', 'Overall Comment']);
 
-  // Parse the epics in relation to this user
-  if (summary.topDownMap.Epic !== undefined && Object.keys(summary.topDownMap.Epic).length > 0) {
-    overallTable.push(...parseWorkItemTypeForUser(user, summary.topDownMap['Epic'], summary));
-  }
-
-  if (summary.topDownMap["Key Result"] !== undefined && Object.keys(summary.topDownMap["Key Result"]).length > 0) {
-    overallTable.push(...parseWorkItemTypeForUser(user, summary.topDownMap['Key Result'], summary));
-  }
-
-  // Put all the scenarios that weren't captured in the epics
+  // Parse the scenarios in relation to this user
   if (summary.topDownMap["Scenario"] !== undefined && Object.keys(summary.topDownMap["Scenario"]).length > 0) {
-    let parentlessItems = Object.keys(summary.topDownMap["Scenario"]).filter(key => summary.topDownMap["Scenario"]![key].parent === undefined && summary.topDownMap["Scenario"]![key].assignedTo.indexOf(user) !== -1);
+    let orderedScenarios: ItemsRelation = {};
+    for (const key in summary.topDownMap['Scenario']) {
+      const item: ItemRelation = summary.topDownMap['Scenario']![key];
+      const match = item.title.match(/^\[(\d+)]/);
+      const newKey = match ? parseInt(match[1], 10) : item.id;
+
+      Object.defineProperty(orderedScenarios, newKey,
+        Object.getOwnPropertyDescriptor(summary.topDownMap["Scenario"], key)!);
+    }
+
+    console.log("Ordered scenarios:");
+    console.log(orderedScenarios);
+    overallTable.push(...parseWorkItemTypeForUser(user, orderedScenarios, summary, 0));
+  }
+
+  // Put all the deliverables that weren't captured in the scenarios
+  if (summary.topDownMap["Deliverable"] !== undefined && Object.keys(summary.topDownMap["Deliverable"]).length > 0) {
+    let parentlessItems = Object.keys(summary.topDownMap["Deliverable"]).filter(key => summary.topDownMap["Deliverable"]![key].parent === undefined && summary.topDownMap["Deliverable"]![key].assignedTo.indexOf(user) !== -1);
     if (parentlessItems.length > 0) {
+      overallTable.push(["---"]);
       let parentlessItemsMap: ItemsRelation = {};
       parentlessItems.forEach(key => {
-        parentlessItemsMap[key] = summary.topDownMap["Scenario"]![key];
+        parentlessItemsMap[key] = summary.topDownMap["Deliverable"]![key];
       });
       overallTable.push(["", "[Parentless]"]);
       overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 1));
     }
   }
 
-  // Put all the deliverables that weren't captured in the epics
-  if (summary.topDownMap["Deliverable"] !== undefined && Object.keys(summary.topDownMap["Deliverable"]).length > 0) {
-    let parentlessItems = Object.keys(summary.topDownMap["Deliverable"]).filter(key => summary.topDownMap["Deliverable"]![key].parent === undefined && summary.topDownMap["Deliverable"]![key].assignedTo.indexOf(user) !== -1);
-    if (parentlessItems.length > 0) {
-      let parentlessItemsMap: ItemsRelation = {};
-      parentlessItems.forEach(key => {
-        parentlessItemsMap[key] = summary.topDownMap["Deliverable"]![key];
-      });
-      overallTable.push(["", "[Parentless]"]);
-      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 2));
-    }
-  }
-
-  // Put all the tasks that weren't captured in the epics
+  // Put all the tasks that weren't captured in the scenarios
   if (summary.topDownMap["Task"] !== undefined && Object.keys(summary.topDownMap["Task"]).length > 0) {
     let parentlessItems = Object.keys(summary.topDownMap["Task"]).filter(key => summary.topDownMap["Task"]![key].parent === undefined && summary.topDownMap["Task"]![key].assignedTo.indexOf(user) !== -1);
     if (parentlessItems.length > 0) {
+      overallTable.push(["---"]);
       let parentlessItemsMap: ItemsRelation = {};
       parentlessItems.forEach(key => {
         parentlessItemsMap[key] = summary.topDownMap["Task"]![key];
       });
       console.log("Task", user, parentlessItems, parentlessItemsMap);
       overallTable.push(["", "[Parentless]"]);
-      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 3));
+      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 2));
     }
   }
 
-  // Put all the tasks that weren't captured in the epics
+  // Put all the tasks that weren't captured in the scenarios
   if (summary.topDownMap["Bug"] !== undefined && Object.keys(summary.topDownMap["Bug"]).length > 0) {
     let parentlessItems = Object.keys(summary.topDownMap["Bug"]).filter(key => summary.topDownMap["Bug"]![key].parent === undefined && summary.topDownMap["Bug"]![key].assignedTo.indexOf(user) !== -1);
     if (parentlessItems.length > 0) {
+      overallTable.push(["---"]);
       let parentlessItemsMap: ItemsRelation = {};
       parentlessItems.forEach(key => {
         parentlessItemsMap[key] = summary.topDownMap["Bug"]![key];
       });
       console.log("Bug", user, parentlessItemsMap);
       overallTable.push(["", "[Parentless]"]);
-      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 3));
+      overallTable.push(...parseWorkItemTypeForUser(user, parentlessItemsMap, summary, 2));
     }
   }
 
@@ -434,6 +452,21 @@ const App = (): JSX.Element => {
     }
 
     let finalReport: string = `# Cycle summary for ${summary.cycle} (${team})\n\n`;
+
+    finalReport += "  "
+    finalReport += `
+## Key:
+- ⬅️ Moved into cycle
+- 🟡 Proposed
+- 🔵 Committed/Active
+- 🟢 Started
+- ✅ Closed/Resolved/Completed
+- ☑️ Completed (but not assigned to you)
+- ✂️ Cut
+- 🔴 Unknown
+- ➡️ Moved out of cycle
+
+`;
 
 
     // finalReport += `## Team Summary\n\n${parseTeamSummary(summary)}\n\n`;

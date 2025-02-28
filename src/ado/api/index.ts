@@ -23,6 +23,7 @@ async function fetchWithTimeout(url: string, timeout: number = 30000) {
 
 async function fetchWithAuth(url: string, retry: number = 0): Promise<any> {
   try {
+    console.log(`Fetching with auth for ${url}`);
     const response = await fetchWithTimeout(url);
     const data = await response.json();
     return data;
@@ -30,32 +31,40 @@ async function fetchWithAuth(url: string, retry: number = 0): Promise<any> {
     if (error instanceof SyntaxError && retry < 3) {
       console.error(`JSON Parse error. Attempting to authenticate. Retry ${retry + 1} / 3`);
       // JSON parse error indicates unauthenticated request
+      await clearCookies();
       await authenticate(url);
-      return fetchWithAuth(url, retry + 1);
+      return await fetchWithAuth(url, retry + 1);
     } else {
       throw error;
     }
   }
 }
 
-async function authenticate(url: string): Promise<void> {
-  // Clear cookies
-  chrome.cookies.getAll({ domain: "visualstudio.com" }, (cookies) => {
-    cookies.forEach((cookie) => {
-      const protocol = cookie.secure ? "https" : "http";
-      const domain = cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain;
-      const cookieUrl = `${protocol}://${domain}${cookie.path}`;
-
-      chrome.cookies.remove({ url: cookieUrl, name: cookie.name }, (details) => {
-        if (chrome.runtime.lastError) {
-          console.error("Failed to remove cookie:", chrome.runtime.lastError);
-        } else if (details) {
-          console.log("Deleted cookie:", details);
-        }
-      });
+async function clearCookies(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    // Clear cookies
+    chrome.cookies.getAll({ domain: "visualstudio.com" }, (cookies) => {
+      for (const cookie of cookies) {
+        const protocol = cookie.secure ? "https" : "http";
+        const domain = cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain;
+        const cookieUrl = `${protocol}://${domain}${cookie.path}`;
+  
+        chrome.cookies.remove({ url: cookieUrl, name: cookie.name }, (details) => {
+          if (chrome.runtime.lastError) {
+            console.error("Failed to remove cookie:", chrome.runtime.lastError);
+          } else if (details) {
+            console.log("Deleted cookie:", details);
+          }
+        });
+      }
+      resolve();
     });
   });
+}
 
+async function authenticate(url: string): Promise<void> {
+  console.log(`Authenticating for ${url}`);
+  const maxWaitTime = 15000;
   // Open a new tab in the background
   const tab = await chrome.tabs.create({
     url: url,
@@ -63,39 +72,65 @@ async function authenticate(url: string): Promise<void> {
   });
 
   if (!tab.id) return;
+  return new Promise((resolve, reject) => {
+    let lastNavigationTime = Date.now();
 
-  // Track when the page is actually done loading (handles redirects)
-  await new Promise<void>((resolve) => {
-    let lastUrl = url;
-    let loadCounter = 0;
-    let timeout: number;
-
-    function listener(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
-      if (tabId !== tab.id) return;
-
-      if (changeInfo.status === "complete") {
-        loadCounter++;
-
-        // If the URL has changed, it means a redirect happened
-        if (tab.url && tab.url !== lastUrl) {
-          lastUrl = tab.url;
-          loadCounter = 0; // Reset counter because a redirect happened
-        }
-
-        // Ensure that no new loads are triggered for 1 second
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          chrome.tabs.onUpdated.removeListener(listener);
-          resolve();
-        }, 2000);
+    chrome.tabs.create({ url, active: false }, (tab) => {
+      if (!tab.id) {
+        reject(new Error('Failed to create tab'));
+        return;
       }
-    }
 
-    chrome.tabs.onUpdated.addListener(listener);
+      const tabId = tab.id;
+
+      const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo, updatedTab: chrome.tabs.Tab) => {
+        if (updatedTabId === tabId) {
+          if (changeInfo.status === 'loading') {
+            // Reset the timer on each new navigation
+            lastNavigationTime = Date.now();
+          } else if (changeInfo.status === 'complete') {
+            // Check if the URL has changed (indicating a redirect)
+            chrome.tabs.get(tabId, (currentTab) => {
+              if (currentTab.url !== url) {
+                // If redirected, reset the timer and wait for the next 'complete' event
+                lastNavigationTime = Date.now();
+              } else {
+                // If not redirected, wait a bit more and then close the tab
+                setTimeout(() => {
+                  chrome.tabs.remove(tabId, () => {
+                    chrome.tabs.onUpdated.removeListener(listener);
+                    resolve();
+                  });
+                }, 2000); // Wait 2 more seconds after 'complete' status
+              }
+            });
+          }
+        }
+      };
+
+      chrome.tabs.onUpdated.addListener(listener);
+
+      // Set an overall timeout
+      const timeoutId = setTimeout(() => {
+        chrome.tabs.remove(tabId, () => {
+          chrome.tabs.onUpdated.removeListener(listener);
+          reject(new Error('Tab load timed out'));
+        });
+      }, maxWaitTime);
+
+      // Check periodically if we've been waiting too long since the last navigation
+      const intervalId = setInterval(() => {
+        if (Date.now() - lastNavigationTime > 10000) { // 10 seconds of no activity
+          clearInterval(intervalId);
+          clearTimeout(timeoutId);
+          chrome.tabs.remove(tabId, () => {
+            chrome.tabs.onUpdated.removeListener(listener);
+            resolve(); // Assume it's done if no activity for 10 seconds
+          });
+        }
+      }, 1000); // Check every second
+    });
   });
-
-  // Close the tab after it's done
-  await chrome.tabs.remove(tab.id);
 }
 
 export async function post(url: string, body: any, timeout: number = 30000): Promise<Response> {

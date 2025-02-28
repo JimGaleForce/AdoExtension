@@ -22,6 +22,7 @@ export type WorkItemReference = {
 }
 
 export type ItemRelation = {
+    id: string;
     assignedTo: string[]
     title: string
     type: WorkItemType

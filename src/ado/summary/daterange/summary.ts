@@ -186,6 +186,7 @@ async function ParseItemType(config: AdoConfigData, workItems: WorkItem<keyof Wo
         }
         if (!topDownMap[itemKey]?.[itemId]) {
             topDownMap[itemKey]![itemId] = {
+                id: itemId,
                 title: workItem.fields["System.Title"],
                 type: itemKey,
                 assignedTo: []

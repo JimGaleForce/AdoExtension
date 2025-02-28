@@ -17,8 +17,8 @@ function parseURL(): { organization: string, project: string, team: string, cycl
   const organization = url.hostname.split('.')[0];
   const project = pathParts[0];
   const team = decodeURIComponent(pathParts[3]);
-  const cycle = decodeURIComponent(pathParts[6]);
-  const iteration = decodeURIComponent(pathParts[7]);
+  const cycle = decodeURIComponent(pathParts[5]);
+  const iteration = decodeURIComponent(pathParts[6]);
 
   return {
     organization,
