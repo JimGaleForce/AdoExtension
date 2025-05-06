@@ -116,8 +116,8 @@ async function parseWorkItem(config: AdoConfigData, cycle: string, workItemId: s
         state: workItem.fields["System.State"],
         assignedTo: tags.completedBy ?? workItem.fields["System.AssignedTo"],
         tags: tags,
-        risk: workItem.fields["OSG.RiskAssessment"] ?? "",
-        riskComment: workItem.fields["OSG.RiskAssessmentComment"] ?? "",
+        risk: workItem.fields["OSG.RiskAssessment"] ?? workItem.fields["Microsoft.VSTS.Common.CustomString08"] ?? "",
+        riskComment: workItem.fields["OSG.RiskAssessmentComment"] ?? workItem.fields["Microsoft.VSTS.Common.CustomString09"] ?? "",
         overallComment: workItem.fields["OSG.OverallComments"] ?? ""
     }
 }

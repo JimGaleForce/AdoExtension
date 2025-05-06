@@ -53,6 +53,7 @@ async function addGenerateButtons() {
     return;
   }
 
+  console.log("[ADO Powertools] Injecting generate summary buttons.");
   const isNewAdoHub = dataProviders.sharedData._features["ms.vss-work-web.new-boards-hub-feature"] === true;
 
   let topBar = isNewAdoHub ? 
@@ -83,6 +84,8 @@ async function addGenerateButtons() {
       "vss-PivotBar--button bolt-button enabled bolt-focus-treatment";
     generateIterationSummaryButton.onclick = createIterationSummary;
     topBar.prepend(generateIterationSummaryButton);
+
+    console.log("[ADO Powertools] Injected buttons.");
   } else {
     waitFirst();
   }
@@ -92,6 +95,7 @@ function waitFirst() {
   window.setTimeout(addGenerateButtons, 100);
 }
 
+console.log("[ADO Powertools] Main World - Initialized");
 waitFirst();
 
 export { }

@@ -209,6 +209,16 @@ export type WorkItemFields = {
     "OSG.RemainingDays"?: number
     "OSG.RemainingDevDays"?: number
     "OSG.Cost"?: number
+
+    "Microsoft.VSTS.Common.CustomString01"?: string
+    "Microsoft.VSTS.Common.CustomString02"?: string
+    "Microsoft.VSTS.Common.CustomString03"?: string
+    "Microsoft.VSTS.Common.CustomString04"?: string
+    "Microsoft.VSTS.Common.CustomString05"?: string
+    "Microsoft.VSTS.Common.CustomString06"?: string
+    "Microsoft.VSTS.Common.CustomString07"?: string
+    "Microsoft.VSTS.Common.CustomString08"?: string
+    "Microsoft.VSTS.Common.CustomString09"?: string
 }
 
 

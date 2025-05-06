@@ -120,6 +120,11 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: I
       }
 
       row.push(status);
+
+      // Risk assessments
+      row.push(summary.workItems[key].risk?.replaceAll("\r?\n", "<br/>") ?? "")
+      row.push(summary.workItems[key].riskComment?.replaceAll("\r?\n", "<br/>")  ?? "")
+      row.push(summary.workItems[key].overallComment?.replaceAll("\r?\n", "<br/>")  ?? "")
     }
 
     table.push(row);
@@ -147,7 +152,7 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: I
 const parseUser = (user: string, summary: IterationSummary): string | null => {
   let overallTable: string[][] = []
 
-  overallTable.push(['Work Item', 'Title', 'Status']);
+  overallTable.push(['Work Item', 'Title', 'Status', 'Risk Assessment', 'Risk Comment', 'Overall Comment']);
 
   // Parse the epics in relation to this user
   if (summary.topDownMap.Epic !== undefined && Object.keys(summary.topDownMap.Epic).length > 0) {

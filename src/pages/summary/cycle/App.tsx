@@ -142,9 +142,9 @@ const parseWorkItemTypeForUser = (user: string, items: ItemsRelation, summary: C
       row.push(status);
 
       // Risk assessments
-      row.push(summary.workItems[id].risk ?? "")
-      row.push(summary.workItems[id].riskComment ?? "")
-      row.push(summary.workItems[id].overallComment ?? "")
+      row.push(summary.workItems[id].risk?.replaceAll("\r?\n", "<br/>")  ?? "")
+      row.push(summary.workItems[id].riskComment?.replaceAll("\r?\n", "<br/>")  ?? "")
+      row.push(summary.workItems[id].overallComment?.replaceAll("\r?\n", "<br/>")  ?? "")
     }
 
     table.push(row);
